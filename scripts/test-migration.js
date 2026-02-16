@@ -4,29 +4,41 @@ require('dotenv').config();
 async function main() {
     console.log('🧪 MIGRATION TEST (Safe Mode) 🧪\n');
 
-    const dbUrl = process.env.DATABASE_URL;
+    const rawDbUrl = process.env.DATABASE_URL;
+    const dbUrl = rawDbUrl ? rawDbUrl.replace(/^"|"$/g, '') : '';
     if (!dbUrl) {
         console.error('❌ DATABASE_URL is not defined in .env');
         process.exit(1);
     }
 
-    // Parse DB URL to get credentials for psql
-    const regex = /postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/;
-    const match = dbUrl.match(regex);
-
-    if (!match) {
+    // Parse DB URL to get credentials for psql (allow URLs without password)
+    let parsed;
+    try {
+        parsed = new URL(dbUrl);
+    } catch {
         console.error('❌ Could not parse DATABASE_URL. Ensure it follows standard format.');
         process.exit(1);
     }
 
-    const [_, user, password, host, port] = match;
+    const user = parsed.username;
+    const password = parsed.password || '';
+    const host = parsed.hostname;
+    const port = parsed.port || '5432';
+
+    if (!user || !host) {
+        console.error('❌ Could not parse DATABASE_URL. Ensure it follows standard format.');
+        process.exit(1);
+    }
 
     // Generate random temp DB name
     const tempDbName = `test_migration_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const tempDbUrl = `postgresql://${user}:${password}@${host}:${port}/${tempDbName}`;
+    const auth = password ? `${user}:${password}@` : `${user}@`;
+    const tempDbUrl = `postgresql://${auth}${host}:${port}/${tempDbName}`;
 
     // Set PGPASSWORD for all psql commands
-    process.env.PGPASSWORD = password;
+    if (password) {
+        process.env.PGPASSWORD = password;
+    }
 
     try {
         console.log(`1. Creating temporary database: "${tempDbName}"...`);
