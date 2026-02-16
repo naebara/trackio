@@ -1,0 +1,343 @@
+# Project Template: Complete Setup Guide
+
+This document contains **everything** you need to recreate the project infrastructure. It includes the full content of all configuration and boilerplate files.
+
+## 1. Project Structure
+
+Create the following directory structure:
+
+```
+.
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   └── signup/
+│   ├── globals.css
+│   └── layout.tsx
+├── lib/
+│   └── prisma.ts
+├── prisma/
+│   └── schema.prisma
+├── public/
+├── .env
+├── auth.config.ts
+├── auth.ts
+├── middleware.ts
+├── next.config.ts
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## 2. Configuration Files
+
+### [package.json](file:///Users/naebara/projects/dani/package.json)
+
+```json
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "migrate": "npx prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.4.0",
+    "@prisma/client": "^7.4.0",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "framer-motion": "^12.34.0",
+    "lucide-react": "^0.564.0",
+    "next": "16.1.6",
+    "next-auth": "^5.0.0-beta.30",
+    "pg": "^8.18.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "prisma": "^7.4.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}
+```
+
+### [tsconfig.json](file:///Users/naebara/projects/dani/tsconfig.json)
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
+```
+
+### [next.config.ts](file:///Users/naebara/projects/dani/next.config.ts)
+
+```typescript
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+};
+
+export default nextConfig;
+```
+
+###  [.env](file:///Users/naebara/projects/dani/.env) (Environment Variables)
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/myapp?schema=public"
+AUTH_SECRET="your-generated-secret-key" # Run: openssl rand -base64 32
+```
+
+---
+
+## 3. Styling Setup
+
+### [app/globals.css](file:///Users/naebara/projects/dani/app/globals.css) (Tailwind v4)
+
+```css
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+```
+
+---
+
+## 4. Database Infrastructure
+
+### [prisma/schema.prisma](file:///Users/naebara/projects/dani/prisma/schema.prisma)
+
+This schema includes the core User model for auth and full-text search extensions.
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm, unaccent]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Add your application models here...
+```
+
+### [lib/prisma.ts](file:///Users/naebara/projects/dani/lib/prisma.ts)
+
+Singleton pattern for Prisma Client to prevent connection exhaustion in dev.
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+const connectionString = process.env.DATABASE_URL;
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    adapter,
+    log: ['query'],
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+```
+
+---
+
+## 5. Authentication (NextAuth v5)
+
+### [auth.config.ts](file:///Users/naebara/projects/dani/auth.config.ts)
+
+```typescript
+import type { NextAuthConfig } from 'next-auth';
+
+export const authConfig = {
+    pages: {
+        signIn: '/login',
+    },
+    callbacks: {
+        authorized({ auth, request: { nextUrl } }) {
+            const isLoggedIn = !!auth?.user;
+            const isOnAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/signup');
+
+            if (isOnAuthPage) {
+                if (isLoggedIn) return Response.redirect(new URL('/', nextUrl));
+                return true;
+            }
+
+            return isLoggedIn;
+        },
+    },
+    providers: [], // Providers configured in auth.ts
+} satisfies NextAuthConfig;
+```
+
+### [auth.ts](file:///Users/naebara/projects/dani/auth.ts)
+
+```typescript
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+import Credentials from 'next-auth/providers/credentials';
+import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+
+async function getUser(email: string) {
+    try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        return user;
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        throw new Error('Failed to fetch user.');
+    }
+}
+
+export const { auth, signIn, signOut } = NextAuth({
+    ...authConfig,
+    providers: [
+        Credentials({
+            async authorize(credentials) {
+                const parsedCredentials = z
+                    .object({ email: z.string().email(), password: z.string().min(6) })
+                    .safeParse(credentials);
+
+                if (parsedCredentials.success) {
+                    const { email, password } = parsedCredentials.data;
+                    const user = await getUser(email);
+                    if (!user) return null;
+
+                    const passwordsMatch = await bcrypt.compare(password, user.password as string);
+                    if (passwordsMatch) return user;
+                }
+                return null;
+            },
+        }),
+    ],
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) token.id = user.id;
+            return token;
+        },
+        async session({ session, token }) {
+            if (token?.id && session.user) session.user.id = token.id as string;
+            return session;
+        },
+    },
+});
+```
+
+### [middleware.ts](file:///Users/naebara/projects/dani/middleware.ts)
+
+```typescript
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+
+export default NextAuth(authConfig).auth;
+
+export const config = {
+    // Matcher excluding api, static files, images
+    matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+};
+```
+
+---
+
+## 6. Initialization Steps
+
+1.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
+2.  **Initialize Database**:
+    ```bash
+    npx prisma migrate dev --name init
+    ```
+3.  **Start Development**:
+    ```bash
+    npm run dev
+    ```
