@@ -34,24 +34,44 @@ rl.question('📦 Enter new project name (kebab-case recommended): ', (name) => 
     const envPath = path.join(projectRoot, '.env');
     const envExamplePath = path.join(projectRoot, '.env.example');
 
-    // Ensure .env exists (copy from example if needed, though we created .env directly)
-    if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
-        fs.copyFileSync(envExamplePath, envPath);
+    console.log(`\n📂 Checking environment files...`);
+    console.log(`   - Project Root: ${projectRoot}`);
+    console.log(`   - .env Path: ${envPath}`);
+    console.log(`   - .env.example Path: ${envExamplePath}`);
+
+    // Ensure .env exists
+    if (!fs.existsSync(envPath)) {
+        if (fs.existsSync(envExamplePath)) {
+            console.log('   - .env not found. Copying from .env.example...');
+            fs.copyFileSync(envExamplePath, envPath);
+            console.log('   ✅ .env created.');
+        } else {
+            console.error('   ❌ .env.example not found! Cannot create .env automatically.');
+            // Create empty .env so we can at least write the secret
+            fs.writeFileSync(envPath, '');
+            console.log('   ⚠️ Created empty .env file.');
+        }
+    } else {
+        console.log('   - .env already exists.');
     }
 
     if (fs.existsSync(envPath)) {
         let envContent = fs.readFileSync(envPath, 'utf8');
 
-
         // Check if AUTH_SECRET is missing or needs replacement
-        if (!envContent.includes('AUTH_SECRET=') || envContent.includes('your-generated-secret-key')) {
+        // Only generate if explicitly missing or placeholder is present
+        const needsSecret = !envContent.includes('AUTH_SECRET=') ||
+            (envContent.includes('AUTH_SECRET=') && envContent.includes('your-generated-secret-key'));
+
+        if (needsSecret) {
             try {
                 console.log('🔑 Generating AUTH_SECRET...');
-                const secret = execSync('openssl rand -base64 32').toString().trim();
+                const crypto = require('crypto');
+                const secret = crypto.randomBytes(32).toString('base64');
 
                 if (envContent.includes('your-generated-secret-key')) {
                     envContent = envContent.replace('your-generated-secret-key', secret);
-                } else {
+                } else if (!envContent.includes('AUTH_SECRET=')) {
                     // Append if completely missing
                     envContent += `\nAUTH_SECRET="${secret}"\n`;
                 }
@@ -62,7 +82,7 @@ rl.question('📦 Enter new project name (kebab-case recommended): ', (name) => 
                 console.warn('⚠️ Failed to generate AUTH_SECRET. Please set it manually:', e);
             }
         } else {
-            console.log('✅ AUTH_SECRET already exists in .env');
+            console.log('✅ AUTH_SECRET is already set in .env');
         }
     }
 
