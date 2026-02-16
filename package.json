@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "setup": "node scripts/setup.js",
-    "db:up": "docker-compose up -d",
-    "db:setup": "node scripts/db-local-setup.js"
+    "db:setup": "node scripts/db-local-setup.js",
+    "db:draft": "node scripts/db-draft.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
