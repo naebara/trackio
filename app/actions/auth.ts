@@ -1,10 +1,11 @@
 'use server';
 
-import { signIn } from '@/auth';
+import { signIn, signOut } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { AuthError } from 'next-auth';
 import { z } from 'zod';
+
 
 const SignupSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -66,3 +67,5 @@ export async function authenticate(
         throw error;
     }
 }
+
+

@@ -9,6 +9,8 @@ export const authConfig = {
             const isLoggedIn = !!auth?.user;
             const isOnAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/signup');
 
+            if (nextUrl.pathname === '/') return true;
+
             if (isOnAuthPage) {
                 if (isLoggedIn) return Response.redirect(new URL('/', nextUrl));
                 return true;
