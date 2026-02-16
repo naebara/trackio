@@ -14,15 +14,14 @@
 ## DATABASE CHANGES
 
 9. Edit `schema.prisma` with inline comments explaining purpose of new fields/models
-10. Create migration files as `prisma/migrations/z_000X_<descriptive_slug>/migration.sql`
-    - Check existing migrations with `z_` prefix using `view` or `bash_tool`
-    - Use the next sequential number (if `z_0003` exists, use `z_0004`)
-    - If no `z_` migrations exist, start with `z_0001`
-11. Include in migration SQL:
+10. Ask user to run `npm run db:prepare-migration` to create a new migration file
+    - This script handles the naming convention (z_ prefix)
+11. Add SQL to the created migration file:
     - Descriptive comments at the top
     - Forward migration (CREATE, ALTER, etc.)
     - Backward rollback plan as comments
-12. **STOP** - ask user to run `npx prisma migrate deploy` - **NEVER** execute it yourself
+12. Ask user to run `npm run db:test-migration` to verify
+13. Ask user to run `npm run db:migrate` to apply changes - **NEVER** execute it yourself
 13. Never drop columns without user approval (data loss risk)
 14. Always add indexes for foreign keys
 
