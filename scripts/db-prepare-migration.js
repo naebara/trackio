@@ -11,7 +11,7 @@ const rl = readline.createInterface({
 const question = (query) => new Promise((resolve) => rl.question(query, resolve));
 
 async function main() {
-    console.log('📝 Draft Migration (Safe Mode)\n');
+    console.log('📝 Prepare Migration (Safe Mode)\n');
     console.log('This script generates a SQL migration file based on your schema changes.');
     console.log('It will NOT apply the changes to your database.\n');
 
@@ -63,12 +63,9 @@ async function main() {
         // We need to load env to get DATABASE_URL for the "from" state
         require('dotenv').config();
 
-        const dbUrl = process.env.DATABASE_URL;
-        if (!dbUrl) {
-            throw new Error('DATABASE_URL is not defined in .env');
-        }
-
-        const command = `npx prisma migrate diff --from-url "${dbUrl}" --to-schema-datamodel prisma/schema.prisma --script`;
+        // Prisma 7 requires using --from-config-datasource instead of --from-url
+        // We already loaded dotenv, so DATABASE_URL is in process.env, which prisma.config.ts reads.
+        const command = `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`;
 
         const sql = execSync(command).toString();
 
@@ -100,6 +97,7 @@ ${sql}
 
         console.log(`\n✅ Migration drafted: ${filePath}`);
         console.log('👉 Action Required: Review the SQL file, then run "npx prisma migrate deploy" to apply.');
+        console.log('💡 Tip: If this migration generates SQL you already saw, you likely have pending migrations to apply.');
 
     } catch (error) {
         console.error('\n❌ Error:', error.message);

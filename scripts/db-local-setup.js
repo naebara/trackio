@@ -35,8 +35,20 @@ async function main() {
         try {
             execSync(`psql -c "CREATE DATABASE ${dbName} OWNER ${dbUser};" postgres`, { stdio: 'ignore' });
             console.log(`✅ Database "${dbName}" created.`);
+
+            // Enable Extensions (requires superuser)
+            console.log(`🔌 Enabling extensions...`);
+            execSync(`psql -d ${dbName} -c "CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS unaccent;"`, { stdio: 'ignore' });
+            console.log(`✅ Extensions enabled.`);
         } catch (e) {
-            console.log(`ℹ️  Database "${dbName}" might already exist (skipped).`);
+            console.log(`ℹ️  Database "${dbName}" might already exist (skipped creation).`);
+            // Try enabling extensions anyway in case they are missing
+            try {
+                execSync(`psql -d ${dbName} -c "CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS unaccent;"`, { stdio: 'ignore' });
+                console.log(`✅ Extensions verified.`);
+            } catch (extError) {
+                console.log(`⚠️  Could not enable extensions. Ensure you have permissions.`);
+            }
         }
 
         // 2. Update .env

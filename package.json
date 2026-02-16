@@ -9,7 +9,9 @@
     "lint": "eslint",
     "setup": "node scripts/setup.js",
     "db:setup": "node scripts/db-local-setup.js",
-    "db:draft": "node scripts/db-draft.js"
+    "db:prepare-migration": "node scripts/db-prepare-migration.js",
+    "db:migrate": "npx prisma migrate deploy",
+    "db:test-migration": "node scripts/test-migration.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
