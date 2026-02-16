@@ -41,16 +41,28 @@ rl.question('📦 Enter new project name (kebab-case recommended): ', (name) => 
 
     if (fs.existsSync(envPath)) {
         let envContent = fs.readFileSync(envPath, 'utf8');
-        if (envContent.includes('your-generated-secret-key')) {
+
+
+        // Check if AUTH_SECRET is missing or needs replacement
+        if (!envContent.includes('AUTH_SECRET=') || envContent.includes('your-generated-secret-key')) {
             try {
                 console.log('🔑 Generating AUTH_SECRET...');
                 const secret = execSync('openssl rand -base64 32').toString().trim();
-                envContent = envContent.replace('your-generated-secret-key', secret);
+
+                if (envContent.includes('your-generated-secret-key')) {
+                    envContent = envContent.replace('your-generated-secret-key', secret);
+                } else {
+                    // Append if completely missing
+                    envContent += `\nAUTH_SECRET="${secret}"\n`;
+                }
+
                 fs.writeFileSync(envPath, envContent);
                 console.log('✅ Generated new AUTH_SECRET in .env');
             } catch (e) {
-                console.warn('⚠️ Failed to generate AUTH_SECRET. Please set it manually.');
+                console.warn('⚠️ Failed to generate AUTH_SECRET. Please set it manually:', e);
             }
+        } else {
+            console.log('✅ AUTH_SECRET already exists in .env');
         }
     }
 
