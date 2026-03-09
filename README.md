@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# `template-psql`
 
-## Getting Started
+Standard starter for self-hosted `Next.js + PostgreSQL + Prisma + NextAuth` apps.
 
-First, run the development server:
+## Standard contract
+
+Every app based on this template should keep the same production contract:
+
+- `Dockerfile` for container-based deploys
+- `output: "standalone"` in Next.js
+- `/api/health` endpoint for health checks
+- `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, `AUTH_URL`, `NEXTAUTH_URL`
+- optional `RUN_DB_MIGRATIONS=true` for single-instance deploys
+
+## Local development
 
 ```bash
+cp .env.example .env
+npm install
+npm run db:generate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production runtime
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The production container:
 
-## Learn More
+- builds the app with `npm run build`
+- serves it on `0.0.0.0:3000`
+- exposes health on `/api/health`
+- can run `npm run db:migrate` at boot when `RUN_DB_MIGRATIONS=true`
 
-To learn more about Next.js, take a look at the following resources:
+## Coolify deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Recommended first deployment pattern:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Create a new project in Coolify
+2. Add a PostgreSQL resource for the app
+3. Create a new application from the Git repo
+4. Select `Dockerfile` deploy mode
+5. Set the port to `3000`
+6. Add the required environment variables
+7. Set a domain only after the app responds correctly on the internal URL
 
-## Deploy on Vercel
+### Required environment variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public
+AUTH_SECRET=$(openssl rand -base64 32)
+AUTH_TRUST_HOST=true
+AUTH_URL=https://your-domain.example
+NEXTAUTH_URL=https://your-domain.example
+PORT=3000
+RUN_DB_MIGRATIONS=false
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Migration strategy
+
+Recommended:
+
+- use a single replica per app at first
+- keep `RUN_DB_MIGRATIONS=true` only while you are on one instance
+- if you later scale horizontally, move migrations to a dedicated deploy step
+
+## Next apps to standardize after this
+
+- `autodoc`
+- `finbara-app`
+
+The goal is to make all of them match this template before production migration.

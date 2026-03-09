@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:production": "./scripts/start-production.sh",
     "lint": "eslint",
     "setup": "node scripts/setup.js",
     "db:setup": "node scripts/db-local-setup.js",
@@ -25,6 +26,7 @@
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "pg": "^8.18.0",
+    "prisma": "^7.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.4.1",
@@ -41,7 +43,6 @@
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "prisma": "^7.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
