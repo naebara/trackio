@@ -12,16 +12,95 @@ Every app based on this template should keep the same production contract:
 - `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, `AUTH_URL`, `NEXTAUTH_URL`
 - optional `RUN_DB_MIGRATIONS=true` for single-instance deploys
 
-## Local development
+## Getting started after cloning
+
+### Prerequisites
+
+- Node.js `22.x`
+- Local PostgreSQL installed and running
+- `psql` available in your `PATH`
+- A local PostgreSQL role with enough permissions to create:
+  - databases
+  - users
+  - extensions (`pg_trgm`, `unaccent`)
+
+### Bootstrap the project
+
+From a fresh clone, run:
 
 ```bash
-cp .env.example .env
-npm install
+npm run setup
+```
+
+This script will:
+
+- ask for the new project name and update `package.json`
+- create `.env` from `.env.example` if it does not exist
+- generate `AUTH_SECRET`
+- run `npm install`
+
+### Create the local database
+
+Run:
+
+```bash
+npm run db:setup
+```
+
+This script will prompt for local database values and then:
+
+- create the local PostgreSQL user if needed
+- create the local PostgreSQL database if needed
+- enable `pg_trgm` and `unaccent`
+- update `DATABASE_URL` in `.env`
+
+Defaults used by the script:
+
+```bash
+DB user: app_user
+DB password: app_password
+DB name: myapp_local
+```
+
+### Generate Prisma client and apply migrations
+
+After the database exists, run:
+
+```bash
 npm run db:generate
+npm run db:migrate
 npm run dev
 ```
 
 App: [http://localhost:3000](http://localhost:3000)
+
+### First login
+
+Open [http://localhost:3000/signup](http://localhost:3000/signup) and create the first user from the UI.
+
+## Local development
+
+If the project is already bootstrapped and your `.env` is set, the usual workflow is:
+
+```bash
+npm run db:generate
+npm run dev
+```
+
+## Environment variables
+
+The template expects:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public"
+AUTH_SECRET="generated-secret"
+AUTH_TRUST_HOST="true"
+AUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:3000"
+PORT="3000"
+```
+
+These are already provided in `.env.example`. `npm run setup` copies that file into `.env` and replaces the `AUTH_SECRET` placeholder.
 
 ## Production runtime
 
