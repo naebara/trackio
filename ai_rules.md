@@ -1,4 +1,3 @@
-# AI Agent Global Rules - Finance Application
 
 ## CRITICAL - ZERO TOLERANCE
 
@@ -22,8 +21,9 @@
     - Backward rollback plan as comments
 12. Ask user to run `npm run db:test-migration` to verify
 13. Ask user to run `npm run db:migrate` to apply changes - **NEVER** execute it yourself
-13. Never drop columns without user approval (data loss risk)
-14. Always add indexes for foreign keys
+14. Never drop columns without user approval (data loss risk)
+15. Always add indexes for foreign keys
+16. **NEVER** Never modify migration files. NEVER!
 
 ## TESTING
 
@@ -58,3 +58,79 @@ Ensures correct centering relative to the viewport
 33. Ask user about edge cases, performance requirements, security considerations
 34. Explain WHY changes improve codebase before suggesting them
 35. Provide options with pros/cons for design decisions
+
+never run npm run build
+
+NEVER TRY TO OPEN BROWSERS TO DO CHECKS!
+NEVER TRY TO USE TAILWIND CSS
+NEVER REMOVE ELEMENTS FROM THE SIDEBAR UNLESS USER SAYS SO
+
+## FLOW REFACTOR & MODULAR ARCHITECTURE (MANDATORY)
+
+This is the required implementation standard for any new feature and any refactor of existing flows.
+
+### Required folder structure per flow
+
+For any flow, split code into:
+
+- `app/<flow>/page.*` (routing entry only)
+- `app/<flow>/<Flow>View.*` or `PageClient.*` (composition only)
+- `app/<flow>/components/*` (presentational/UI)
+- `app/<flow>/components/sections/*` (large page sections)
+- `app/<flow>/components/charts/*` (chart-only components, if needed)
+- `app/<flow>/hooks/*` (domain hooks + orchestration hooks)
+- `app/<flow>/lib/*` (pure utils, mapping, formatting, derivations)
+- `app/<flow>/constants/*` (static config/tabs/style maps)
+- `*.module.css` per component/section for static styling
+
+### Architecture contract
+
+1. Page shell and view files are orchestration/composition only.
+2. Business logic must live in hooks or pure utilities, not in JSX-heavy files.
+3. Presentational components receive explicit props and avoid hidden dependencies.
+4. Side effects are centralized in dedicated hooks/controllers.
+5. No direct fetch/mutation in purely presentational components.
+
+### Hard file size policy
+
+These limits are mandatory:
+
+- Page shell: max 200 lines
+- UI component: max 250 lines
+- Hook: max 250 lines
+- Utility/config file: max 180 lines
+- CSS module: max 220 lines
+- Absolute cap: no file above 300 lines
+
+If a file exceeds the limit, split before merging.
+
+### CSS rules
+
+1. Use native Mantine style props (`p`, `mt`, `bg`, etc.) and the `style` prop for static and runtime-calculated styling.
+2. Do NOT use CSS modules unless absolutely necessary for complex animations or pseudo-elements not supported by Mantine.
+3. Keep the UI logic inside the React components cleanly with Mantine's built-in layout components (`Container`, `Group`, `Stack`, `Box`, `Paper`).
+4. Avoid semantic class names unless writing a `.module.css` file for a rare advanced case.
+
+### Performance and stability rules
+
+1. Refactor must keep functional parity.
+2. Do not change API contracts during structural refactor unless explicitly requested.
+3. Memoize expensive derivations where needed.
+4. Keep handler identities stable where rerenders matter.
+5. Preserve existing lazy-loading/portal behavior.
+
+### Mandatory validation gates
+
+Before committing:
+
+1. Lint all touched files.
+2. Build/typecheck according to project constraints used in this repo.
+3. Verify line limits for the refactored flow.
+4. Run smoke checks for critical user paths:
+   - filters/search
+   - create/edit/delete
+   - modal open/close behavior
+   - empty/loading/error states
+   - export/print paths (if applicable)
+
+No next step starts until the current gate passes.

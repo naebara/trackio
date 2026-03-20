@@ -4,7 +4,7 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 FROM deps AS builder
 COPY . .
@@ -24,21 +24,17 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./prisma.config.ts
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
-COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/app ./app
-COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/auth.ts ./auth.ts
-COPY --from=builder /app/auth.config.ts ./auth.config.ts
-COPY --from=builder /app/next.config.ts ./next.config.ts
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/proxy.ts ./proxy.ts
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/scripts/start-production.sh ./scripts/start-production.sh
 
-RUN chmod +x ./scripts/start-production.sh
+RUN chmod +x ./scripts/start-production.sh \
+    && chown -R node:node /app
+
+USER node
 
 EXPOSE 3000
 
