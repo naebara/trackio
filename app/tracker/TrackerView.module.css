@@ -1,44 +1,75 @@
-.page {
-  min-height: 100vh;
-  padding: 2rem 0 3rem;
-  background:
-    radial-gradient(circle at 10% 20%, rgba(186, 230, 253, 0.5), transparent 22%),
-    radial-gradient(circle at 85% 12%, rgba(167, 243, 208, 0.48), transparent 22%),
-    linear-gradient(180deg, #eef5ff 0%, #f8fbff 38%, #f4f8f5 100%);
+.appShell {
+  background-color: var(--mantine-color-gray-0);
 }
 
-.container {
-  width: min(100%, 1180px);
+:global([data-mantine-color-scheme="dark"]) .appShell {
+  background-color: var(--mantine-color-dark-8);
 }
 
-.loading {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.header {
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  background-color: var(--mantine-color-white);
 }
 
-.pageTitle {
-  color: #122033;
-  font-size: 1.35rem;
-  font-weight: 800;
+:global([data-mantine-color-scheme="dark"]) .header {
+  border-bottom: 1px solid var(--mantine-color-dark-5);
+  background-color: var(--mantine-color-dark-7);
 }
 
-.pageSubtitle {
-  color: #64748b;
-  margin-top: 0.18rem;
+.brandText {
+  letter-spacing: -0.5px;
+  background: -webkit-linear-gradient(45deg, var(--mantine-color-indigo-6), var(--mantine-color-cyan-6));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.tabsRoot {
-  overflow: visible;
+:global([data-mantine-color-scheme="dark"]) .brandText {
+  background: -webkit-linear-gradient(45deg, var(--mantine-color-indigo-4), var(--mantine-color-cyan-4));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.tab {
-  font-weight: 700;
+.navbar {
+  border-right: 1px solid var(--mantine-color-gray-2);
+  background-color: var(--mantine-color-white);
+}
+
+:global([data-mantine-color-scheme="dark"]) .navbar {
+  border-right: 1px solid var(--mantine-color-dark-5);
+  background-color: var(--mantine-color-dark-7);
+}
+
+.navLink {
+  border-radius: var(--mantine-radius-md);
+  margin-bottom: 4px;
+  color: var(--mantine-color-gray-7);
+}
+
+:global([data-mantine-color-scheme="dark"]) .navLink {
+  color: var(--mantine-color-dark-0);
+}
+
+.mainContent {
+  padding-top: calc(var(--app-shell-header-height) + 20px) !important;
+  padding-bottom: 40px !important;
+}
+
+.sectionCard {
+  background-color: var(--mantine-color-white);
+  border-radius: var(--mantine-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--mantine-shadow-xs);
+  border: 1px solid var(--mantine-color-gray-2);
+}
+
+:global([data-mantine-color-scheme="dark"]) .sectionCard {
+  background-color: var(--mantine-color-dark-7);
+  border: 1px solid var(--mantine-color-dark-5);
 }
 
 @media (max-width: 48em) {
-  .page {
-    padding-top: 1rem;
+  .sectionCard {
+    padding: 1rem;
+    border-radius: var(--mantine-radius-md);
   }
 }

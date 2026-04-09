@@ -15,14 +15,14 @@ import {
 import { useState } from "react";
 import { recurrenceOptions, recurrenceUnits, topicColorOptions, weekdayOptions } from "../constants/options";
 import { todayKey } from "../lib/date";
-import type { RecurrenceRule, Topic } from "../lib/types";
+import type { RecurrenceRule, Topic, TopicMutationInput } from "../lib/types";
 import classes from "./TopicFormModal.module.css";
 
 interface TopicFormModalProps {
   opened: boolean;
   topic?: Topic;
   onClose: () => void;
-  onSave: (topic: Omit<Topic, "id" | "createdAt" | "updatedAt"> & { id?: string }) => void;
+  onSave: (topic: TopicMutationInput) => void;
 }
 
 function getInitialRecurrence(topic?: Topic): RecurrenceRule {

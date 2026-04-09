@@ -1,28 +1,38 @@
 "use client";
 
-import { Container, Group, Stack, Tabs, Text } from "@mantine/core";
+import {
+  Alert,
+  Box,
+  Stack,
+} from "@mantine/core";
 import { useMemo, useState } from "react";
-import { addDays, eachDayInRange, todayKey } from "./lib/date";
-import { isTopicExpectedOnDate } from "./lib/recurrence";
-import type { Topic, TrackerUser } from "./lib/types";
-import { useTrackerApp } from "./hooks/useTrackerApp";
-import { trackerText } from "./constants/i18n";
-import EntryFormModal from "./components/EntryFormModal";
-import TopicFormModal from "./components/TopicFormModal";
 import CalendarSection from "./components/sections/CalendarSection";
 import DayBoardSection from "./components/sections/DayBoardSection";
 import HeroSection from "./components/sections/HeroSection";
 import InsightsSection from "./components/sections/InsightsSection";
 import MatrixSection from "./components/sections/MatrixSection";
 import TopicsSection from "./components/sections/TopicsSection";
+import EntryFormModal from "./components/EntryFormModal";
+import TopicFormModal from "./components/TopicFormModal";
+import TrackerShell from "./components/TrackerShell";
+import { useTrackerApp } from "./hooks/useTrackerApp";
 import classes from "./TrackerView.module.css";
+import { addDays, eachDayInRange, todayKey } from "./lib/date";
+import { isTopicExpectedOnDate } from "./lib/recurrence";
+import type { Topic, TrackerState, TrackerUser } from "./lib/types";
 
 interface TrackerViewProps {
+  initialState: TrackerState;
+  setupMessage: string | null;
   user?: TrackerUser;
 }
 
-export default function TrackerView({ user }: TrackerViewProps) {
-  const tracker = useTrackerApp(user?.id);
+export default function TrackerView({
+  initialState,
+  setupMessage,
+  user,
+}: TrackerViewProps) {
+  const tracker = useTrackerApp(initialState);
   const [selectedDate, setSelectedDate] = useState(todayKey());
   const [monthKey, setMonthKey] = useState(todayKey());
   const [activeTab, setActiveTab] = useState("today");
@@ -31,6 +41,19 @@ export default function TrackerView({ user }: TrackerViewProps) {
   const [editingTopic, setEditingTopic] = useState<Topic | undefined>();
   const [entryDraft, setEntryDraft] = useState<{ topic?: Topic; date?: string }>({});
   const [entryModalNonce, setEntryModalNonce] = useState(0);
+
+  const expectedTopicsForSelectedDate = useMemo(
+    () => tracker.activeTopics.filter((topic) => isTopicExpectedOnDate(topic, selectedDate)),
+    [selectedDate, tracker.activeTopics],
+  );
+  const matrixDates = useMemo(
+    () => eachDayInRange(addDays(selectedDate, -13), selectedDate),
+    [selectedDate],
+  );
+  const monthSummaries = useMemo(
+    () => tracker.getMonthSummaries(monthKey),
+    [monthKey, tracker],
+  );
 
   function handleSelectedDateChange(date: string) {
     setSelectedDate(date);
@@ -49,20 +72,10 @@ export default function TrackerView({ user }: TrackerViewProps) {
     setTopicModalOpened(true);
   }
 
-  const expectedTopicsForSelectedDate = useMemo(
-    () =>
-      tracker.activeTopics.filter((topic) => isTopicExpectedOnDate(topic, selectedDate)),
-    [selectedDate, tracker.activeTopics],
-  );
-
-  const matrixDates = useMemo(
-    () => eachDayInRange(addDays(selectedDate, -13), selectedDate),
-    [selectedDate],
-  );
-  const monthSummaries = useMemo(
-    () => tracker.getMonthSummaries(monthKey),
-    [monthKey, tracker],
-  );
+  function openEntryModal(topic: Topic, date: string) {
+    setEntryDraft({ topic, date });
+    setEntryModalNonce((current) => current + 1);
+  }
 
   function saveQuickValue(topicId: string, date: string, value: number) {
     const current = tracker.entryMap.get(`${topicId}:${date}`);
@@ -75,53 +88,55 @@ export default function TrackerView({ user }: TrackerViewProps) {
   }
 
   return (
-    <div className={classes.page}>
-      <Container className={classes.container} size="xl">
-        <Stack gap="lg">
-          <HeroSection
-            selectedDate={selectedDate}
-            onSelectedDateChange={handleSelectedDateChange}
-            onPreviousDay={() => handleSelectedDateChange(addDays(selectedDate, -1))}
-            onNextDay={() => handleSelectedDateChange(addDays(selectedDate, 1))}
-            onAddTopic={openCreateTopicModal}
-            stats={tracker.globalStats}
-          />
-          <Group justify="space-between" align="center">
-            <div>
-              <Text className={classes.pageTitle}>Routine cockpit</Text>
-              <Text className={classes.pageSubtitle}>
-                {user?.name || user?.email
-                  ? `Working locally as ${user.name ?? user.email}.`
-                  : "Working locally with seeded demo data. All changes persist in this browser."}
-              </Text>
-            </div>
-          </Group>
-          <Tabs
-            classNames={{ root: classes.tabsRoot, tab: classes.tab }}
-            value={activeTab}
-            onChange={(value) => setActiveTab(value ?? "today")}
-          >
-            <Tabs.List>
-              <Tabs.Tab value="today">{trackerText.todayTab}</Tabs.Tab>
-              <Tabs.Tab value="calendar">{trackerText.calendarTab}</Tabs.Tab>
-              <Tabs.Tab value="matrix">{trackerText.matrixTab}</Tabs.Tab>
-              <Tabs.Tab value="topics">{trackerText.topicsTab}</Tabs.Tab>
-              <Tabs.Tab value="insights">{trackerText.insightsTab}</Tabs.Tab>
-            </Tabs.List>
-            <Tabs.Panel value="today" pt="lg">
+    <>
+      <TrackerShell
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        userLabel={
+          user?.name || user?.email ? `User: ${user.name ?? user.email}` : "Authenticated"
+        }
+      >
+        <Stack gap="xl">
+          {setupMessage || tracker.errorMessage ? (
+            <Alert
+              color={setupMessage ? "orange" : "red"}
+              radius="lg"
+              title={setupMessage ? "Tracker setup required" : "Save failed"}
+              withCloseButton={Boolean(tracker.errorMessage)}
+              onClose={tracker.errorMessage ? tracker.clearError : undefined}
+            >
+              {setupMessage ?? tracker.errorMessage}
+            </Alert>
+          ) : null}
+
+          {activeTab === "today" || activeTab === "calendar" ? (
+            <Box className={classes.sectionCard} py="xl">
+              <HeroSection
+                selectedDate={selectedDate}
+                onSelectedDateChange={handleSelectedDateChange}
+                onPreviousDay={() => handleSelectedDateChange(addDays(selectedDate, -1))}
+                onNextDay={() => handleSelectedDateChange(addDays(selectedDate, 1))}
+                onAddTopic={openCreateTopicModal}
+                stats={tracker.globalStats}
+              />
+            </Box>
+          ) : null}
+
+          {activeTab === "today" && (
+            <Box className={classes.sectionCard}>
               <DayBoardSection
                 date={selectedDate}
                 topics={expectedTopicsForSelectedDate}
                 entryMap={tracker.entryMap}
                 onLogValue={saveQuickValue}
-                onEditEntry={(topic, date) => {
-                  setEntryDraft({ topic, date });
-                  setEntryModalNonce((current) => current + 1);
-                }}
+                onEditEntry={openEntryModal}
               />
-            </Tabs.Panel>
-            <Tabs.Panel value="calendar" pt="lg">
-              <Stack gap="lg">
+            </Box>
+          )}
+
+          {activeTab === "calendar" && (
+            <Stack gap="xl">
+              <Box className={classes.sectionCard}>
                 <CalendarSection
                   monthKey={monthKey}
                   selectedDate={selectedDate}
@@ -129,31 +144,35 @@ export default function TrackerView({ user }: TrackerViewProps) {
                   onMonthChange={setMonthKey}
                   onSelectDate={handleSelectedDateChange}
                 />
+              </Box>
+              <Box className={classes.sectionCard}>
                 <DayBoardSection
                   date={selectedDate}
                   topics={expectedTopicsForSelectedDate}
                   entryMap={tracker.entryMap}
                   onLogValue={saveQuickValue}
-                  onEditEntry={(topic, date) => {
-                    setEntryDraft({ topic, date });
-                    setEntryModalNonce((current) => current + 1);
-                  }}
+                  onEditEntry={openEntryModal}
                 />
-              </Stack>
-            </Tabs.Panel>
-            <Tabs.Panel value="matrix" pt="lg">
+              </Box>
+            </Stack>
+          )}
+
+          {activeTab === "matrix" && (
+            <Box className={classes.sectionCard}>
               <MatrixSection
                 topics={tracker.activeTopics}
                 dates={matrixDates}
                 entryMap={tracker.entryMap}
                 onSelectCell={(topic, date) => {
                   handleSelectedDateChange(date);
-                  setEntryDraft({ topic, date });
-                  setEntryModalNonce((current) => current + 1);
+                  openEntryModal(topic, date);
                 }}
               />
-            </Tabs.Panel>
-            <Tabs.Panel value="topics" pt="lg">
+            </Box>
+          )}
+
+          {activeTab === "topics" && (
+            <Box className={classes.sectionCard}>
               <TopicsSection
                 activeTopics={tracker.activeTopics}
                 archivedTopics={tracker.archivedTopics}
@@ -164,13 +183,17 @@ export default function TrackerView({ user }: TrackerViewProps) {
                 onRestore={tracker.restoreTopic}
                 onDelete={tracker.deleteTopic}
               />
-            </Tabs.Panel>
-            <Tabs.Panel value="insights" pt="lg">
+            </Box>
+          )}
+
+          {activeTab === "insights" && (
+            <Box className={classes.sectionCard}>
               <InsightsSection topics={tracker.topics} topicStats={tracker.topicStats} />
-            </Tabs.Panel>
-          </Tabs>
+            </Box>
+          )}
         </Stack>
-      </Container>
+      </TrackerShell>
+
       <TopicFormModal
         key={editingTopic?.id ?? `new-${topicModalNonce}`}
         opened={topicModalOpened}
@@ -209,6 +232,6 @@ export default function TrackerView({ user }: TrackerViewProps) {
           setEntryDraft({});
         }}
       />
-    </div>
+    </>
   );
 }

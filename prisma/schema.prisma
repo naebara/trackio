@@ -16,6 +16,84 @@ model User {
   image     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Tracker topics owned by this authenticated user.
+  topics Topic[]
+  // Per-day tracker entries owned by this authenticated user.
+  dailyEntries DailyEntry[]
 }
 
-// Add your application models here...
+enum TopicRecurrenceType {
+  DAILY
+  EVERY_X_DAYS
+  SELECTED_WEEKDAYS
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+enum TopicRecurrenceUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+model Topic {
+  id        String   @id @default(cuid())
+  userId    String
+  // Short label shown in the dashboard, calendar, and matrix views.
+  name      String
+  // Optional product copy that clarifies the topic's intent or success criteria.
+  description String @default("")
+  // Accent color used to identify the topic quickly across the UI.
+  color     String   @default("#2269c8")
+  // First calendar day where this topic becomes eligible for expected tracking.
+  startDate DateTime @db.Date
+  // Optional final calendar day after which the topic stops producing expectations.
+  endDate   DateTime? @db.Date
+  // Archive timestamp used to hide inactive topics without losing history.
+  archivedAt DateTime?
+  // Recurrence shape evaluated by the reusable scheduling engine.
+  recurrenceType TopicRecurrenceType
+  // Generic interval used by every-X-days and custom recurrences.
+  recurrenceInterval Int?
+  // Weekday indexes (0..6) used for selected-weekday schedules.
+  recurrenceWeekdays Int[]
+  // Single weekday anchor for weekly and custom weekly schedules.
+  recurrenceDayOfWeek Int?
+  // Day-of-month anchor for monthly and custom monthly schedules.
+  recurrenceDayOfMonth Int?
+  // Unit for custom recurrences such as every 2 weeks or every 3 months.
+  recurrenceUnit TopicRecurrenceUnit?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries DailyEntry[]
+
+  @@index([userId])
+  @@index([userId, archivedAt])
+  @@index([userId, startDate])
+}
+
+model DailyEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  topicId   String
+  // Calendar date being logged. Missing data is represented by no row at all.
+  date      DateTime @db.Date
+  // Completion percentage from 0 to 100.
+  value     Int
+  // Optional note attached to this daily check-in.
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, date])
+  @@index([userId])
+  @@index([topicId])
+  @@index([userId, date])
+}

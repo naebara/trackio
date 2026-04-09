@@ -1,41 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useMemo, useReducer, useState, useTransition } from "react";
+import {
+  deleteEntryAction,
+  deleteTopicAction,
+  saveEntryAction,
+  saveTopicAction,
+} from "../actions";
 import { addDays, eachDayInRange, getMonthEnd, getMonthStart, todayKey } from "../lib/date";
-import { trackerReducer } from "../lib/reducer";
-import { createEntryMap, calculateGlobalStats, calculateTopicStats, buildDaySummaries } from "../lib/stats";
-import { getInitialTrackerState, loadTrackerState, saveTrackerState } from "../lib/storage";
 import { isTopicExpectedOnDate } from "../lib/recurrence";
-import type { DailyEntry, Topic } from "../lib/types";
+import { trackerReducer } from "../lib/reducer";
+import {
+  buildDaySummaries,
+  calculateGlobalStats,
+  calculateTopicStats,
+  createEntryMap,
+} from "../lib/stats";
+import type { EntryMutationInput, TopicMutationInput, TrackerState } from "../lib/types";
 
-interface TopicInput extends Omit<Topic, "id" | "createdAt" | "updatedAt"> {
-  id?: string;
-}
-
-interface EntryInput {
-  topicId: string;
-  date: string;
-  value: number;
-  note: string;
-}
-
-function createId(prefix: string) {
-  return `${prefix}-${crypto.randomUUID()}`;
-}
-
-export function useTrackerApp(userId?: string) {
-  const hasLoadedRef = useRef(false);
-  const [state, dispatch] = useReducer(trackerReducer, getInitialTrackerState());
-
-  useEffect(() => {
-    dispatch({ type: "hydrate", payload: loadTrackerState(userId) });
-    hasLoadedRef.current = true;
-  }, [userId]);
-
-  useEffect(() => {
-    if (!hasLoadedRef.current) return;
-    saveTrackerState(state, userId);
-  }, [state, userId]);
+export function useTrackerApp(initialState: TrackerState) {
+  const [state, dispatch] = useReducer(trackerReducer, initialState);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const entryMap = useMemo(() => createEntryMap(state.entries), [state.entries]);
   const today = todayKey();
@@ -57,7 +43,6 @@ export function useTrackerApp(userId?: string) {
     () => calculateGlobalStats(activeTopics, state.entries, rangeStart, today),
     [activeTopics, rangeStart, state.entries, today],
   );
-
   const topicStats = useMemo(
     () =>
       Object.fromEntries(
@@ -66,18 +51,20 @@ export function useTrackerApp(userId?: string) {
     [entryMap, rollingDates, state.topics],
   );
 
-  function upsertTopic(input: TopicInput) {
-    const now = new Date().toISOString();
-    const topic: Topic = {
-      ...input,
-      id: input.id ?? createId("topic"),
-      createdAt: input.id
-        ? state.topics.find((topicItem) => topicItem.id === input.id)?.createdAt ?? now
-        : now,
-      updatedAt: now,
-    };
+  function clearError() {
+    setErrorMessage(null);
+  }
 
-    dispatch({ type: "upsertTopic", payload: topic });
+  function upsertTopic(input: TopicMutationInput) {
+    clearError();
+    startTransition(async () => {
+      try {
+        const topic = await saveTopicAction(input);
+        dispatch({ type: "upsertTopic", payload: topic });
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Failed to save topic.");
+      }
+    });
   }
 
   function archiveTopic(topicId: string) {
@@ -95,29 +82,42 @@ export function useTrackerApp(userId?: string) {
   }
 
   function deleteTopic(topicId: string) {
-    dispatch({ type: "deleteTopic", payload: { topicId } });
+    clearError();
+    startTransition(async () => {
+      try {
+        await deleteTopicAction(topicId);
+        dispatch({ type: "deleteTopic", payload: { topicId } });
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Failed to delete topic.");
+      }
+    });
   }
 
-  function upsertEntry(input: EntryInput) {
-    const now = new Date().toISOString();
-    const current = entryMap.get(`${input.topicId}:${input.date}`);
-    const value = Math.max(0, Math.min(100, input.value));
-
-    const entry: DailyEntry = {
-      id: current?.id ?? createId("entry"),
-      topicId: input.topicId,
-      date: input.date,
-      value,
-      note: input.note,
-      createdAt: current?.createdAt ?? now,
-      updatedAt: now,
-    };
-
-    dispatch({ type: "upsertEntry", payload: entry });
+  function upsertEntry(input: EntryMutationInput) {
+    clearError();
+    startTransition(async () => {
+      try {
+        const entry = await saveEntryAction({
+          ...input,
+          value: Math.max(0, Math.min(100, input.value)),
+        });
+        dispatch({ type: "upsertEntry", payload: entry });
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Failed to save entry.");
+      }
+    });
   }
 
   function deleteEntry(topicId: string, date: string) {
-    dispatch({ type: "deleteEntry", payload: { topicId, date } });
+    clearError();
+    startTransition(async () => {
+      try {
+        await deleteEntryAction(topicId, date);
+        dispatch({ type: "deleteEntry", payload: { topicId, date } });
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Failed to delete entry.");
+      }
+    });
   }
 
   function getMonthSummaries(monthKey: string) {
@@ -128,6 +128,9 @@ export function useTrackerApp(userId?: string) {
   return {
     topics: state.topics,
     entries: state.entries,
+    isPending,
+    errorMessage,
+    clearError,
     entryMap,
     activeTopics,
     archivedTopics,

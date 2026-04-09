@@ -13,7 +13,7 @@ The app supports:
 
 ## Current implementation
 
-The shipped app is local-first and persists in browser storage so it works immediately without blocked database migrations.
+The tracker is now wired for Prisma-backed persistence and authenticated per-user data.
 
 The feature is intentionally split into:
 
@@ -22,7 +22,7 @@ The feature is intentionally split into:
 - reusable UI in [`app/tracker/components`](/Users/naebara/projects/trackio/app/tracker/components)
 - route entrypoints in [`app/tracker/page.tsx`](/Users/naebara/projects/trackio/app/tracker/page.tsx) and [`app/page.tsx`](/Users/naebara/projects/trackio/app/page.tsx)
 
-That separation is the foundation for moving persistence behind Prisma later without rewriting the recurrence engine or views.
+That separation keeps the recurrence engine and view layer stable while the persistence implementation evolves.
 
 ## 1. Recommended architecture
 
@@ -31,14 +31,13 @@ Use a layered product architecture:
 1. Presentation: page shells, tabs, cards, modals, matrix cells, calendar cells.
 2. Application state: one tracker hook that owns topic and entry mutations plus hydration.
 3. Domain engine: recurrence evaluation, expected-day generation, stats derivation, date helpers.
-4. Persistence adapter: local storage now, Prisma repository later.
+4. Persistence adapter: Prisma-backed repository behind authenticated server actions.
 
 Recommended production path:
 
 - keep the current domain layer unchanged
-- add `TopicRepository` and `EntryRepository` interfaces
-- implement a Prisma adapter behind server actions or route handlers
-- scope data by authenticated `userId`
+- retain Prisma-backed server actions for mutations
+- scope all tracker data by authenticated `userId`
 - add background jobs later for reminders/export
 
 ## 2. Data models / entities
@@ -79,12 +78,14 @@ Current app entities:
   - average logged value
   - coverage rate
 
-Recommended future Prisma entities:
+Prisma entities in the current schema:
 
 - `User`
 - `Topic`
-- `TopicRecurrence`
 - `DailyEntry`
+
+Potential future entities:
+
 - `TopicCategory`
 - `Reminder`
 - `AuditEvent`
@@ -132,7 +133,7 @@ State is owned by [`useTrackerApp.ts`](/Users/naebara/projects/trackio/app/track
 
 - `useReducer` for deterministic topic and entry mutations
 - derived maps and stats via memoized selectors
-- local persistence adapter for hydration and save
+- Prisma-backed server actions for create/update/delete
 - one shared state source updates today view, calendar, matrix, and insights immediately
 
 ## 7. Clean, scalable implementation details
@@ -141,35 +142,22 @@ Scalability choices already in place:
 
 - recurrence logic is pure and reusable
 - stats are derived, not stored
-- storage is isolated behind helper functions
+- storage is isolated behind server-side repository helpers
 - presentational components do not mutate state directly
 - route shell stays thin
 - CSS is split per component/section
 
 To scale toward production:
 
-- move persistence to Prisma repositories
-- add optimistic server actions
-- add per-user filtering and auth guards
+- add optimistic reconciliation for mutations
 - add export/reminder services without touching the UI layer
+- add pagination/windowing if daily-entry volume becomes large
 
-## 8. Seed / demo data
+## 8. Data bootstrap
 
-The app ships seeded topics in [`demoData.ts`](/Users/naebara/projects/trackio/app/tracker/constants/demoData.ts):
+The tracker now reads and writes real database rows.
 
-- Healthy Eating
-- Exercise
-- Reading
-- Sleep 8h
-- Deep Work
-- Monthly Review
-
-It also seeds realistic entries including:
-
-- `100`
-- `0`
-- partial values like `65` and `80`
-- notes
+Initial state is empty until a user creates topics and daily entries.
 
 ## 9. Folder structure
 
@@ -217,5 +205,5 @@ npm run version:minor
 ## Notes
 
 - No database migrations were run.
-- The current feature persists locally in browser storage by design.
-- If you want a Prisma-backed multi-user version next, add the new schema models and migration separately, then swap the storage adapter.
+- The tracker code expects the new `Topic` and `DailyEntry` tables to exist.
+- If those tables are not migrated yet, the UI shows a setup warning instead of crashing.

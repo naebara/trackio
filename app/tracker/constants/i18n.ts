@@ -1,8 +1,4 @@
 export const trackerText = {
-  appName: "Trackio Routine OS",
-  title: "Configurable routine tracking that treats missing data correctly.",
-  subtitle:
-    "Create flexible topics, log Yes / No / custom percentages, backfill history, and keep stats honest by excluding non-expected days.",
   addTopic: "Add topic",
   editTopic: "Edit topic",
   createTopic: "Create topic",

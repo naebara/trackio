@@ -45,6 +45,24 @@ export interface TrackerState {
   entries: DailyEntry[];
 }
 
+export interface TopicMutationInput {
+  id?: string;
+  name: string;
+  description: string;
+  color: string;
+  startDate: string;
+  endDate?: string | null;
+  archivedAt?: string | null;
+  recurrence: RecurrenceRule;
+}
+
+export interface EntryMutationInput {
+  topicId: string;
+  date: string;
+  value: number;
+  note: string;
+}
+
 export interface TrackerUser {
   id?: string;
   name?: string | null;

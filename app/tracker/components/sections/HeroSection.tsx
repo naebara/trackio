@@ -1,9 +1,8 @@
 "use client";
 
-import { ActionIcon, Group, Paper, SimpleGrid, Text, ThemeIcon } from "@mantine/core";
-import { IconArrowLeft, IconArrowRight, IconBolt, IconPlus } from "@tabler/icons-react";
+import { ActionIcon, Group, Paper, SimpleGrid, Text } from "@mantine/core";
+import { IconArrowLeft, IconArrowRight, IconPlus } from "@tabler/icons-react";
 import { formatDayLabel, todayKey } from "../../lib/date";
-import { trackerText } from "../../constants/i18n";
 import { trackerSelectors } from "../../constants/selectors";
 import StatCard from "../StatCard";
 import classes from "./HeroSection.module.css";
@@ -35,45 +34,37 @@ export default function HeroSection({
 
   return (
     <Paper className={classes.hero} data-testid={trackerSelectors.shell} radius="xl">
-      <Group justify="space-between" align="flex-start" gap="xl">
-        <div className={classes.copy}>
-          <ThemeIcon size={46} radius="xl" className={classes.icon}>
-            <IconBolt size={24} />
-          </ThemeIcon>
-          <Text className={classes.eyebrow}>{trackerText.appName}</Text>
-          <Text className={classes.title}>{trackerText.title}</Text>
-          <Text className={classes.subtitle}>{trackerText.subtitle}</Text>
-        </div>
-        <ActionIcon.Group>
-          <ActionIcon radius="xl" variant="white" onClick={onPreviousDay}>
-            <IconArrowLeft size={18} />
-          </ActionIcon>
-          <ActionIcon
-            radius="xl"
-            variant="filled"
-            color="dark"
-            data-testid={trackerSelectors.addTopicButton}
-            onClick={onAddTopic}
-          >
-            <IconPlus size={18} />
-          </ActionIcon>
-          <ActionIcon radius="xl" variant="white" onClick={onNextDay}>
-            <IconArrowRight size={18} />
-          </ActionIcon>
-        </ActionIcon.Group>
-      </Group>
-      <Group className={classes.filters} justify="space-between" align="center">
+      <Group className={classes.toolbar} justify="space-between" align="center" gap="md">
         <div>
           <Text className={classes.dateLabel}>{isToday ? "Today focus" : "Selected day"}</Text>
           <Text className={classes.dateValue}>{formatDayLabel(selectedDate)}</Text>
         </div>
-        <input
-          aria-label="Selected date"
-          className={classes.dateInput}
-          type="date"
-          value={selectedDate}
-          onChange={(event) => onSelectedDateChange(event.currentTarget.value)}
-        />
+        <Group gap="sm">
+          <ActionIcon.Group>
+            <ActionIcon radius="xl" variant="white" onClick={onPreviousDay}>
+              <IconArrowLeft size={18} />
+            </ActionIcon>
+            <ActionIcon
+              radius="xl"
+              variant="filled"
+              color="dark"
+              data-testid={trackerSelectors.addTopicButton}
+              onClick={onAddTopic}
+            >
+              <IconPlus size={18} />
+            </ActionIcon>
+            <ActionIcon radius="xl" variant="white" onClick={onNextDay}>
+              <IconArrowRight size={18} />
+            </ActionIcon>
+          </ActionIcon.Group>
+          <input
+            aria-label="Selected date"
+            className={classes.dateInput}
+            type="date"
+            value={selectedDate}
+            onChange={(event) => onSelectedDateChange(event.currentTarget.value)}
+          />
+        </Group>
       </Group>
       <SimpleGrid cols={{ base: 2, md: 5 }} spacing="sm">
         <StatCard label="Expected days" value={`${stats.expectedDays}`} />
