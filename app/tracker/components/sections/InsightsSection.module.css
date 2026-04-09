@@ -1,0 +1,50 @@
+.section {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.title {
+  color: #122033;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-top: 0.18rem;
+}
+
+.row {
+  padding: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  background: #fbfdff;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.topicName {
+  color: #122033;
+  font-weight: 700;
+}
+
+.topicMeta {
+  color: #64748b;
+}
+
+.detailRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.detail {
+  color: #526071;
+  font-size: 0.88rem;
+}

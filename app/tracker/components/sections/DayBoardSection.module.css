@@ -1,0 +1,64 @@
+.section {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.title {
+  color: #122033;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #6b7280;
+  margin-top: 0.2rem;
+}
+
+.empty {
+  padding: 1rem;
+  text-align: center;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.card {
+  padding: 1rem;
+  background: #fbfdff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.topicMeta {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.color {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.topicName {
+  color: #122033;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.topicDescription {
+  color: #5b6576;
+  margin-top: 0.18rem;
+  max-width: 34rem;
+}
+
+.progress {
+  margin-top: 0.8rem;
+}
+
+.note {
+  margin-top: 0.7rem;
+  color: #3f4d61;
+  font-size: 0.94rem;
+}

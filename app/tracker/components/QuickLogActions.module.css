@@ -1,0 +1,21 @@
+.actions {
+  flex-wrap: nowrap;
+}
+
+.yes {
+  background: #184e36;
+}
+
+.yes:hover {
+  background: #133c2a;
+}
+
+.no {
+  background: #fff0ea;
+  color: #b6461c;
+}
+
+.custom {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.12);
+}

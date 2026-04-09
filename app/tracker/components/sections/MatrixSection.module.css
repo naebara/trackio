@@ -1,0 +1,80 @@
+.section {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.title {
+  color: #122033;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-top: 0.18rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0.45rem;
+  min-width: 980px;
+}
+
+.table th {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.topicCell {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  color: #122033;
+  font-weight: 700;
+}
+
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+}
+
+.cell {
+  min-width: 4.2rem;
+  padding: 0.72rem 0.35rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.9rem;
+  background: #f8fafc;
+  color: #122033;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.cell[data-state="logged"] {
+  background: #e8f4ff;
+  border-color: rgba(34, 105, 200, 0.18);
+}
+
+.cell[data-state="pending"] {
+  background: #fff8f1;
+  border-color: rgba(217, 119, 6, 0.18);
+}
+
+.cell[data-state="upcoming"] {
+  background: #f4f6fa;
+  color: #94a3b8;
+}
+
+.cell:disabled {
+  cursor: default;
+  background: transparent;
+  border-style: dashed;
+  color: transparent;
+}

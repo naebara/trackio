@@ -1,0 +1,67 @@
+.section {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.title {
+  color: #122033;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-top: 0.18rem;
+}
+
+.card {
+  padding: 1rem;
+  background: #fbfdff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 999px;
+}
+
+.topicName {
+  color: #122033;
+  font-weight: 700;
+}
+
+.topicSummary {
+  margin-top: 0.5rem;
+  color: #2269c8;
+  font-weight: 700;
+}
+
+.topicDescription {
+  margin-top: 0.25rem;
+  color: #526071;
+}
+
+.metrics {
+  margin-top: 1rem;
+}
+
+.metricLabel {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.metricValue {
+  color: #122033;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.archivedLabel {
+  margin-top: 0.7rem;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

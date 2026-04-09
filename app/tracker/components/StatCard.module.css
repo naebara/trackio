@@ -1,0 +1,27 @@
+.card {
+  padding: 1rem 1.1rem;
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(12px);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.card[data-tone="success"] {
+  background: rgba(237, 252, 242, 0.96);
+}
+
+.card[data-tone="warning"] {
+  background: rgba(255, 247, 237, 0.96);
+}
+
+.label {
+  color: #526071;
+  font-size: 0.82rem;
+}
+
+.value {
+  margin-top: 0.35rem;
+  color: #122033;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}

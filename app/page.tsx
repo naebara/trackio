@@ -1,8 +1,5 @@
-import { auth } from "@/auth";
-import DashboardView from "./DashboardView";
+import { redirect } from "next/navigation";
 
-export default async function Home() {
-  const session = await auth();
-
-  return <DashboardView user={session?.user} />;
+export default function Home() {
+  redirect("/tracker");
 }

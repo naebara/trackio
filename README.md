@@ -1,151 +1,221 @@
-# `template-psql`
+# Trackio
 
-Standard starter for self-hosted `Next.js + PostgreSQL + Prisma + NextAuth` apps.
+Configurable habit, routine, and activity tracking for real daily use.
 
-## Standard contract
+The app supports:
 
-Every app based on this template should keep the same production contract:
+- topics such as `Healthy Eating`, `Exercise`, `Reading`, `Sleep 8h`
+- flexible recurrence rules
+- `YES = 100`, `NO = 0`, or any custom percentage from `0` to `100`
+- missing entries that stay neutral instead of being treated as `0`
+- retroactive edits and notes
+- calendar, matrix, topic, and stats views
 
-- `Dockerfile` for container-based deploys
-- `output: "standalone"` in Next.js
-- `/api/health` endpoint for health checks
-- `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, `AUTH_URL`, `NEXTAUTH_URL`
-- optional `RUN_DB_MIGRATIONS=true` for single-instance deploys
+## Current implementation
 
-## Getting started after cloning
+The shipped app is local-first and persists in browser storage so it works immediately without blocked database migrations.
 
-### Prerequisites
+The feature is intentionally split into:
 
-- Node.js `22.x`
-- Local PostgreSQL installed and running
-- `psql` available in your `PATH`
-- A local PostgreSQL role with enough permissions to create:
-  - databases
-  - users
-  - extensions (`pg_trgm`, `unaccent`)
+- pure domain logic in [`app/tracker/lib`](/Users/naebara/projects/trackio/app/tracker/lib)
+- state orchestration in [`app/tracker/hooks`](/Users/naebara/projects/trackio/app/tracker/hooks)
+- reusable UI in [`app/tracker/components`](/Users/naebara/projects/trackio/app/tracker/components)
+- route entrypoints in [`app/tracker/page.tsx`](/Users/naebara/projects/trackio/app/tracker/page.tsx) and [`app/page.tsx`](/Users/naebara/projects/trackio/app/page.tsx)
 
-### Bootstrap the project
+That separation is the foundation for moving persistence behind Prisma later without rewriting the recurrence engine or views.
 
-From a fresh clone, run:
+## 1. Recommended architecture
 
-```bash
-npm run setup
+Use a layered product architecture:
+
+1. Presentation: page shells, tabs, cards, modals, matrix cells, calendar cells.
+2. Application state: one tracker hook that owns topic and entry mutations plus hydration.
+3. Domain engine: recurrence evaluation, expected-day generation, stats derivation, date helpers.
+4. Persistence adapter: local storage now, Prisma repository later.
+
+Recommended production path:
+
+- keep the current domain layer unchanged
+- add `TopicRepository` and `EntryRepository` interfaces
+- implement a Prisma adapter behind server actions or route handlers
+- scope data by authenticated `userId`
+- add background jobs later for reminders/export
+
+## 2. Data models / entities
+
+Current app entities:
+
+- `Topic`
+  - `id`
+  - `name`
+  - `description`
+  - `color`
+  - `startDate`
+  - `endDate`
+  - `archivedAt`
+  - `recurrence`
+  - `createdAt`
+  - `updatedAt`
+- `RecurrenceRule`
+  - `type`: `daily | everyXDays | selectedWeekdays | weekly | monthly | custom`
+  - `interval`
+  - `weekdays`
+  - `dayOfWeek`
+  - `dayOfMonth`
+  - `unit`
+- `DailyEntry`
+  - `id`
+  - `topicId`
+  - `date`
+  - `value`
+  - `note`
+  - `createdAt`
+  - `updatedAt`
+- `TopicStats`
+  - derived only
+  - expected days
+  - logged days
+  - pending days
+  - average logged value
+  - coverage rate
+
+Recommended future Prisma entities:
+
+- `User`
+- `Topic`
+- `TopicRecurrence`
+- `DailyEntry`
+- `TopicCategory`
+- `Reminder`
+- `AuditEvent`
+
+## 3. Main business rules
+
+- Missing entry is not `0%`.
+- Only expected days count toward compliance-related metrics.
+- Non-expected days are ignored in stats and matrix calculations.
+- Archived topics stop generating future expectations but preserve history.
+- Future start dates do not generate expected days before the topic starts.
+- End dates stop expectation generation after the end is reached.
+- Retroactive edits are valid and update all derived views immediately.
+- Custom percentages are clamped to `0..100`.
+- Coverage answers “was this expected day logged?”
+- Average logged value answers “how strong were the logged completions?”
+
+## 4. Page structure
+
+- `/` redirects to `/tracker`
+- `/tracker`
+  - hero summary with selected day and global metrics
+  - `Today` tab for fast day check-in
+  - `Calendar` tab for month summary plus day detail
+  - `Matrix` tab for topic x day editing
+  - `Topics` tab for create/edit/archive/delete
+  - `Insights` tab for per-topic performance
+
+## 5. Reusable UI components
+
+- `HeroSection`
+- `DayBoardSection`
+- `CalendarSection`
+- `MatrixSection`
+- `TopicsSection`
+- `InsightsSection`
+- `TopicFormModal`
+- `EntryFormModal`
+- `QuickLogActions`
+- `StatCard`
+
+## 6. State management approach
+
+State is owned by [`useTrackerApp.ts`](/Users/naebara/projects/trackio/app/tracker/hooks/useTrackerApp.ts):
+
+- `useReducer` for deterministic topic and entry mutations
+- derived maps and stats via memoized selectors
+- local persistence adapter for hydration and save
+- one shared state source updates today view, calendar, matrix, and insights immediately
+
+## 7. Clean, scalable implementation details
+
+Scalability choices already in place:
+
+- recurrence logic is pure and reusable
+- stats are derived, not stored
+- storage is isolated behind helper functions
+- presentational components do not mutate state directly
+- route shell stays thin
+- CSS is split per component/section
+
+To scale toward production:
+
+- move persistence to Prisma repositories
+- add optimistic server actions
+- add per-user filtering and auth guards
+- add export/reminder services without touching the UI layer
+
+## 8. Seed / demo data
+
+The app ships seeded topics in [`demoData.ts`](/Users/naebara/projects/trackio/app/tracker/constants/demoData.ts):
+
+- Healthy Eating
+- Exercise
+- Reading
+- Sleep 8h
+- Deep Work
+- Monthly Review
+
+It also seeds realistic entries including:
+
+- `100`
+- `0`
+- partial values like `65` and `80`
+- notes
+
+## 9. Folder structure
+
+```text
+app/
+  page.tsx
+  tracker/
+    page.tsx
+    TrackerView.tsx
+    components/
+      sections/
+    constants/
+    hooks/
+    lib/
+scripts/
+  version-bump.mjs
 ```
 
-This script will:
+## 10. Run instructions
 
-- ask for the new project name and update `package.json`
-- create `.env` from `.env.example` if it does not exist
-- generate `AUTH_SECRET`
-- run `npm install`
-
-### Create the local database
-
-Run:
+1. Install dependencies if needed:
 
 ```bash
-npm run db:setup
+npm install
 ```
 
-This script will prompt for local database values and then:
-
-- create the local PostgreSQL user if needed
-- create the local PostgreSQL database if needed
-- enable `pg_trgm` and `unaccent`
-- update `DATABASE_URL` in `.env`
-
-Defaults used by the script:
+2. Start the app:
 
 ```bash
-DB user: app_user
-DB password: app_password
-DB name: myapp_local
-```
-
-### Generate Prisma client and apply migrations
-
-After the database exists, run:
-
-```bash
-npm run db:generate
-npm run db:migrate
 npm run dev
 ```
 
-App: [http://localhost:3000](http://localhost:3000)
+3. Open:
 
-### First login
-
-Open [http://localhost:3000/signup](http://localhost:3000/signup) and create the first user from the UI.
-
-## Local development
-
-If the project is already bootstrapped and your `.env` is set, the usual workflow is:
-
-```bash
-npm run db:generate
-npm run dev
+```text
+http://localhost:3000
 ```
 
-## Environment variables
-
-The template expects:
+4. Version bump for feature releases:
 
 ```bash
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public"
-AUTH_SECRET="generated-secret"
-AUTH_TRUST_HOST="true"
-AUTH_URL="http://localhost:3000"
-NEXTAUTH_URL="http://localhost:3000"
-PORT="3000"
+npm run version:minor
 ```
 
-These are already provided in `.env.example`. `npm run setup` copies that file into `.env` and replaces the `AUTH_SECRET` placeholder.
+## Notes
 
-## Production runtime
-
-The production container:
-
-- builds the app with `npm run build`
-- serves it on `0.0.0.0:3000`
-- exposes health on `/api/health`
-- can run `npm run db:migrate` at boot when `RUN_DB_MIGRATIONS=true`
-
-## Coolify deployment
-
-Recommended first deployment pattern:
-
-1. Create a new project in Coolify
-2. Add a PostgreSQL resource for the app
-3. Create a new application from the Git repo
-4. Select `Dockerfile` deploy mode
-5. Set the port to `3000`
-6. Add the required environment variables
-7. Set a domain only after the app responds correctly on the internal URL
-
-### Required environment variables
-
-```bash
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public
-AUTH_SECRET=$(openssl rand -base64 32)
-AUTH_TRUST_HOST=true
-AUTH_URL=https://your-domain.example
-NEXTAUTH_URL=https://your-domain.example
-PORT=3000
-RUN_DB_MIGRATIONS=false
-```
-
-### Migration strategy
-
-Recommended:
-
-- use a single replica per app at first
-- keep `RUN_DB_MIGRATIONS=true` only while you are on one instance
-- if you later scale horizontally, move migrations to a dedicated deploy step
-
-## Next apps to standardize after this
-
-- `autodoc`
-- `finbara-app`
-
-The goal is to make all of them match this template before production migration.
+- No database migrations were run.
+- The current feature persists locally in browser storage by design.
+- If you want a Prisma-backed multi-user version next, add the new schema models and migration separately, then swap the storage adapter.
