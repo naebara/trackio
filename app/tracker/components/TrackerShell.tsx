@@ -20,6 +20,7 @@ import {
   Grid,
   ListTodo,
 } from "lucide-react";
+import { SignOutButton } from "@/app/components/sign-out-button";
 import { trackerText } from "../constants/i18n";
 import classes from "../TrackerView.module.css";
 
@@ -71,9 +72,12 @@ export default function TrackerShell({
               </Text>
             </Group>
           </Group>
-          <Text size="sm" c="dimmed" fw={500} visibleFrom="xs">
-            {userLabel}
-          </Text>
+          <Group gap="sm">
+            <Text size="sm" c="dimmed" fw={500} visibleFrom="xs">
+              {userLabel}
+            </Text>
+            <SignOutButton />
+          </Group>
         </Group>
       </AppShell.Header>
 
