@@ -1,0 +1,181 @@
+.container {
+  /* parent sectionCard handles outer padding */
+}
+
+.header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-muted);
+  margin-bottom: 0.25rem;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.scrollWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollWrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: max-content;
+}
+
+.table th,
+.table td {
+  padding: 0;
+}
+
+.stickyCol {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-surface);
+  min-width: 140px;
+  max-width: 180px;
+}
+
+.dayHeader {
+  text-align: center;
+  padding: 0.5rem 0.2rem;
+  min-width: 50px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.dayHeader[data-today] {
+  color: var(--accent-blue);
+}
+
+.dayAbbr {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dayNum {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.dayHeader[data-today] .dayNum {
+  color: var(--accent-blue);
+}
+
+.topicRow {
+  border-top: 1px solid var(--border-muted);
+}
+
+.topicCell {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 0.6rem 0.8rem 0;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.topicName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 42px;
+  margin: 0 auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: background 100ms ease;
+}
+
+.cell:hover:not(:disabled) {
+  background: var(--bg-inset);
+}
+
+.cell[data-state="done"] {
+  color: var(--accent-blue);
+}
+
+.cell[data-state="missed"] {
+  color: var(--accent-red);
+  opacity: 0.55;
+}
+
+.cell[data-state="pending"] {
+  color: var(--border-default);
+  font-size: 1.1rem;
+}
+
+.cell[data-state="inactive"] {
+  cursor: default;
+  color: var(--border-muted);
+  font-size: 1.2rem;
+}
+
+.empty {
+  padding: 2rem 1rem;
+}
+
+@media (max-width: 48em) {
+  .stickyCol {
+    min-width: 110px;
+    max-width: 140px;
+  }
+
+  .cell {
+    width: 42px;
+    height: 38px;
+    font-size: 0.95rem;
+  }
+
+  .dayHeader {
+    min-width: 42px;
+    font-size: 0.65rem;
+  }
+
+  .dayNum {
+    font-size: 0.78rem;
+  }
+
+  .topicName {
+    font-size: 0.82rem;
+  }
+}

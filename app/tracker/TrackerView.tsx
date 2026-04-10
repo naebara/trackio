@@ -8,9 +8,11 @@ import {
 import { useMemo, useState } from "react";
 import CalendarSection from "./components/sections/CalendarSection";
 import DayBoardSection from "./components/sections/DayBoardSection";
+import HabitGridSection from "./components/sections/HabitGridSection";
 import HeroSection from "./components/sections/HeroSection";
 import InsightsSection from "./components/sections/InsightsSection";
 import MatrixSection from "./components/sections/MatrixSection";
+import TopicDetailSection from "./components/sections/TopicDetailSection";
 import TopicsSection from "./components/sections/TopicsSection";
 import EntryFormModal from "./components/EntryFormModal";
 import TopicFormModal from "./components/TopicFormModal";
@@ -41,6 +43,7 @@ export default function TrackerView({
   const [editingTopic, setEditingTopic] = useState<Topic | undefined>();
   const [entryDraft, setEntryDraft] = useState<{ topic?: Topic; date?: string }>({});
   const [entryModalNonce, setEntryModalNonce] = useState(0);
+  const [viewingTopic, setViewingTopic] = useState<Topic | null>(null);
 
   const expectedTopicsForSelectedDate = useMemo(
     () => tracker.activeTopics.filter((topic) => isTopicExpectedOnDate(topic, selectedDate)),
@@ -87,6 +90,19 @@ export default function TrackerView({
     });
   }
 
+  function cycleEntryValue(topicId: string, date: string) {
+    const entry = tracker.entryMap.get(`${topicId}:${date}`);
+    if (!entry) {
+      tracker.upsertEntry({ topicId, date, value: 100, note: "" });
+    } else if (entry.value === 100) {
+      tracker.upsertEntry({ topicId, date, value: 0, note: entry.note });
+    } else if (entry.value === 0) {
+      tracker.deleteEntry(topicId, date);
+    } else {
+      tracker.upsertEntry({ topicId, date, value: 100, note: entry.note });
+    }
+  }
+
   return (
     <>
       <TrackerShell
@@ -109,7 +125,30 @@ export default function TrackerView({
             </Alert>
           ) : null}
 
-          {activeTab === "today" || activeTab === "calendar" ? (
+          {activeTab === "today" && (
+            <Box className={classes.sectionCard}>
+              {viewingTopic ? (
+                <TopicDetailSection
+                  topic={viewingTopic}
+                  entryMap={tracker.entryMap}
+                  onBack={() => setViewingTopic(null)}
+                  onCycleEntry={cycleEntryValue}
+                  onEditEntry={openEntryModal}
+                />
+              ) : (
+                <HabitGridSection
+                  topics={tracker.activeTopics}
+                  entryMap={tracker.entryMap}
+                  onCycleEntry={cycleEntryValue}
+                  onEditEntry={openEntryModal}
+                  onAddTopic={openCreateTopicModal}
+                  onTopicClick={setViewingTopic}
+                />
+              )}
+            </Box>
+          )}
+
+          {activeTab === "calendar" && (
             <Box className={classes.sectionCard} py="xl">
               <HeroSection
                 selectedDate={selectedDate}
@@ -118,18 +157,6 @@ export default function TrackerView({
                 onNextDay={() => handleSelectedDateChange(addDays(selectedDate, 1))}
                 onAddTopic={openCreateTopicModal}
                 stats={tracker.globalStats}
-              />
-            </Box>
-          ) : null}
-
-          {activeTab === "today" && (
-            <Box className={classes.sectionCard}>
-              <DayBoardSection
-                date={selectedDate}
-                topics={expectedTopicsForSelectedDate}
-                entryMap={tracker.entryMap}
-                onLogValue={saveQuickValue}
-                onEditEntry={openEntryModal}
               />
             </Box>
           )}

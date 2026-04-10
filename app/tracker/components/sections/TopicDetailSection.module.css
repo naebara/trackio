@@ -1,0 +1,80 @@
+.container {
+  /* parent sectionCard handles outer padding */
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.topicName {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.recurrence {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin-top: 0.1rem;
+}
+
+.rangeControl {
+  margin-bottom: 0.75rem;
+}
+
+.customInputs {
+  margin-bottom: 0.75rem;
+}
+
+.dateInput {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.statsGrid {
+  margin-bottom: 1rem;
+}
+
+.statBox {
+  padding: 0.6rem 0.5rem;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+  text-align: center;
+}
+
+.statLabel {
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--font-geist-mono), monospace;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 48em) {
+  .statValue {
+    font-size: 0.95rem;
+  }
+
+  .statLabel {
+    font-size: 0.6rem;
+  }
+}

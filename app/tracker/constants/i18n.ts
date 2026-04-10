@@ -38,4 +38,11 @@ export const trackerText = {
   inactive: "Inactive",
   active: "Active",
   archived: "Archived",
+  habitsTitle: "Habits",
+  noActiveTopics: "No active topics yet. Tap + to create one.",
+  rangeWeek: "Week",
+  rangeMonth: "Month",
+  rangeYear: "Year",
+  rangeAll: "All",
+  rangeCustom: "Custom",
 } as const;
