@@ -1,64 +1,88 @@
 .section {
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.9);
+  padding: 0;
+  background: transparent;
 }
 
 .title {
-  color: #122033;
-  font-size: 1.2rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
   font-weight: 700;
 }
 
 .subtitle {
-  color: #64748b;
-  margin-top: 0.18rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
 }
 
 .monthLabel {
-  min-width: 9rem;
+  min-width: 8rem;
   text-align: center;
-  color: #122033;
+  color: var(--text-primary);
   font-weight: 700;
+  font-size: 0.95rem;
 }
 
 .heading {
-  color: #64748b;
-  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .blank {
-  min-height: 7.5rem;
+  min-height: 5.5rem;
 }
 
 .day {
-  min-height: 7.5rem;
-  padding: 0.8rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 1rem;
-  background: #fbfdff;
+  min-height: 5.5rem;
+  padding: 0.6rem;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   text-align: left;
-  transition: transform 120ms ease, border-color 120ms ease;
+  cursor: pointer;
+  transition: border-color 120ms ease;
 }
 
 .day:hover {
-  transform: translateY(-1px);
-  border-color: rgba(34, 105, 200, 0.28);
+  border-color: var(--accent-blue);
 }
 
 .day[data-selected="true"] {
-  border-color: rgba(24, 78, 54, 0.4);
-  background: #f1fbf5;
+  border-color: var(--accent-green);
+  background: var(--accent-green-subtle);
 }
 
 .dayNumber {
-  color: #122033;
-  font-size: 1.05rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
   font-weight: 700;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 .dayMetric {
-  color: #526071;
-  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 48em) {
+  .blank {
+    min-height: 3.5rem;
+  }
+
+  .day {
+    min-height: 3.5rem;
+    padding: 0.35rem;
+  }
+
+  .dayNumber {
+    font-size: 0.82rem;
+  }
+
+  .dayMetric {
+    font-size: 0.6rem;
+  }
 }

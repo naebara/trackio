@@ -4,14 +4,13 @@ import {
   AppShell,
   Box,
   Burger,
-  Container,
   Group,
   NavLink,
   Stack,
   Text,
   ThemeIcon,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import {
   Activity,
   BarChart3,
@@ -46,72 +45,85 @@ export default function TrackerShell({
   userLabel,
 }: TrackerShellProps) {
   const [opened, { toggle }] = useDisclosure();
+  const isMobile = useMediaQuery("(max-width: 48em)");
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 260, breakpoint: "sm", collapsed: { mobile: !opened } }}
-      padding="md"
-      className={classes.appShell}
-    >
-      <AppShell.Header className={classes.header}>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+    <>
+      <AppShell
+        header={{ height: 48 }}
+        navbar={
+          isMobile
+            ? undefined
+            : { width: 220, breakpoint: "sm", collapsed: { mobile: true } }
+        }
+        padding="md"
+        className={classes.appShell}
+      >
+        <AppShell.Header className={classes.header}>
+          <Group h="100%" px="md" justify="space-between">
             <Group gap="xs">
-              <ThemeIcon
-                size="md"
-                radius="xl"
-                variant="gradient"
-                gradient={{ from: "indigo", to: "cyan" }}
-              >
-                <Activity size={18} />
+              <ThemeIcon size="sm" radius="md" variant="filled" color="blue">
+                <Activity size={14} />
               </ThemeIcon>
-              <Text size="lg" fw={800} className={classes.brandText}>
+              <Text size="md" fw={700} className={classes.brandText}>
                 Trackio
               </Text>
             </Group>
+            <Group gap="sm">
+              <Text size="xs" c="dimmed" fw={500} visibleFrom="sm">
+                {userLabel}
+              </Text>
+              <SignOutButton />
+            </Group>
           </Group>
-          <Group gap="sm">
-            <Text size="sm" c="dimmed" fw={500} visibleFrom="xs">
-              {userLabel}
-            </Text>
-            <SignOutButton />
-          </Group>
-        </Group>
-      </AppShell.Header>
+        </AppShell.Header>
 
-      <AppShell.Navbar p="md" className={classes.navbar}>
-        <Box mb="xl" px="xs">
-          <Text size="xs" fw={700} c="dimmed" tt="uppercase" lts={1}>
-            Routine
-          </Text>
-        </Box>
-        <Stack gap="xs">
+        {!isMobile && (
+          <AppShell.Navbar p="sm" className={classes.navbar}>
+            <Stack gap={2}>
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.value}
+                  active={item.value === activeTab}
+                  label={item.label}
+                  leftSection={
+                    <item.icon
+                      size={16}
+                      strokeWidth={item.value === activeTab ? 2.5 : 1.8}
+                    />
+                  }
+                  onClick={() => onTabChange(item.value)}
+                  className={classes.navLink}
+                  color="blue"
+                  variant="light"
+                  fw={item.value === activeTab ? 600 : 400}
+                />
+              ))}
+            </Stack>
+          </AppShell.Navbar>
+        )}
+
+        <AppShell.Main className={classes.mainContent}>
+          <Box px={{ base: 0, sm: "xs" }}>{children}</Box>
+        </AppShell.Main>
+      </AppShell>
+
+      {isMobile && (
+        <nav className={classes.bottomNav}>
           {navItems.map((item) => (
-            <NavLink
+            <button
               key={item.value}
-              active={item.value === activeTab}
-              label={item.label}
-              leftSection={<item.icon size={18} strokeWidth={item.value === activeTab ? 2.5 : 2} />}
-              onClick={() => {
-                onTabChange(item.value);
-                if (opened) toggle();
-              }}
-              className={classes.navLink}
-              color="indigo"
-              variant="filled"
-              fw={item.value === activeTab ? 600 : 500}
-            />
+              type="button"
+              className={classes.bottomNavButton}
+              data-active={item.value === activeTab}
+              onClick={() => onTabChange(item.value)}
+            >
+              <item.icon size={20} strokeWidth={item.value === activeTab ? 2.5 : 1.8} />
+              <span className={classes.bottomNavLabel}>{item.label}</span>
+            </button>
           ))}
-        </Stack>
-      </AppShell.Navbar>
-
-      <AppShell.Main className={classes.mainContent}>
-        <Container size="xl" p={0}>
-          {children}
-        </Container>
-      </AppShell.Main>
-    </AppShell>
+        </nav>
+      )}
+    </>
   );
 }

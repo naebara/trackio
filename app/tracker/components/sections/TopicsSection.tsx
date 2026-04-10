@@ -35,13 +35,13 @@ function TopicCard({
   const archived = Boolean(topic.archivedAt);
 
   return (
-    <Paper className={classes.card} radius="xl">
+    <Paper className={classes.card} radius="md">
       <Group justify="space-between" align="flex-start" wrap="nowrap">
         <div>
           <Group gap="xs">
             <span className={classes.dot} style={{ backgroundColor: topic.color }} />
             <Text className={classes.topicName}>{topic.name}</Text>
-            <Badge radius="xl" variant={archived ? "filled" : "light"} color={archived ? "gray" : "green"}>
+            <Badge radius="md" variant={archived ? "filled" : "light"} color={archived ? "gray" : "green"}>
               {archived ? "Archived" : "Active"}
             </Badge>
           </Group>
@@ -52,7 +52,7 @@ function TopicCard({
         </div>
         <Menu withinPortal position="bottom-end">
           <Menu.Target>
-            <ActionIcon radius="xl" variant="default">
+            <ActionIcon radius="md" variant="default">
               <IconDots size={18} />
             </ActionIcon>
           </Menu.Target>
@@ -104,7 +104,7 @@ export default function TopicsSection({
   onDelete,
 }: TopicsSectionProps) {
   return (
-    <Paper className={classes.section} radius="xl" withBorder data-testid="tracker-topic-list">
+    <Paper className={classes.section} radius="md" data-testid="tracker-topic-list">
       <Group justify="space-between">
         <div>
           <Text className={classes.title}>Topic library</Text>
@@ -112,7 +112,7 @@ export default function TopicsSection({
             Edit recurrence safely without mixing domain logic into the UI.
           </Text>
         </div>
-        <Button radius="xl" onClick={onCreate}>
+        <Button radius="md" onClick={onCreate}>
           Add topic
         </Button>
       </Group>

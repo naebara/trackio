@@ -20,7 +20,7 @@ export default function MatrixSection({
   onSelectCell,
 }: MatrixSectionProps) {
   return (
-    <Paper className={classes.section} radius="xl" withBorder data-testid="tracker-matrix-grid">
+    <Paper className={classes.section} radius="md" data-testid="tracker-matrix-grid">
       <Text className={classes.title}>Topic x day matrix</Text>
       <Text className={classes.subtitle}>
         Expected cells are interactive. Non-expected days stay out of compliance metrics.

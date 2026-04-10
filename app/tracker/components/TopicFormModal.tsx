@@ -68,7 +68,7 @@ export default function TopicFormModal({
       onClose={onClose}
       title={topic ? "Edit topic" : "Create topic"}
       centered
-      radius="xl"
+      radius="md"
       size="lg"
     >
       <Stack>

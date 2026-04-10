@@ -15,7 +15,7 @@ export default function StatCard({
   tone = "default",
 }: StatCardProps) {
   return (
-    <Paper className={classes.card} data-tone={tone} radius="xl" withBorder>
+    <Paper className={classes.card} data-tone={tone} radius="md">
       <Text className={classes.label}>{label}</Text>
       <Text className={classes.value}>{value}</Text>
     </Paper>

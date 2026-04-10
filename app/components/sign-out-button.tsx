@@ -7,9 +7,10 @@ export function SignOutButton() {
     return (
         <Button
             onClick={() => signOut({ callbackUrl: '/' })}
-            variant="outline"
-            color="red"
-            radius="xl"
+            variant="subtle"
+            color="gray"
+            radius="md"
+            size="xs"
         >
             Sign Out
         </Button>

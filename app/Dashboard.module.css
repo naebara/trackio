@@ -1,33 +1,32 @@
 .container {
   min-height: 100vh;
   padding: 40px 16px;
-  background-color: #f6f6f4;
+  background-color: var(--bg-canvas);
 }
 
 .paper {
   padding: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   max-width: 600px;
   margin: 0 auto;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  background-color: white;
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
 }
 
 .title {
-  font-family: Georgia, serif;
-  font-size: 32px;
-  color: #111827;
+  font-size: 28px;
+  color: var(--text-primary);
   margin-bottom: 24px;
+  font-weight: 700;
 }
 
 .greeting {
-  font-size: 18px;
-  color: #4a4a4a;
+  font-size: 16px;
+  color: var(--text-secondary);
   margin-bottom: 24px;
 }
 
 .highlight {
-  color: #007c89;
+  color: var(--accent-blue);
   font-weight: 600;
 }

@@ -1,6 +1,23 @@
 :root {
-  --background: #f4f8ff;
-  --foreground: #122033;
+  --bg-canvas: #f0f2f5;
+  --bg-surface: #ffffff;
+  --bg-inset: #f7f8fa;
+  --border-default: #e1e4e8;
+  --border-muted: #eaedf0;
+  --text-primary: #1b1f24;
+  --text-secondary: #57606a;
+  --text-muted: #8b949e;
+  --accent-green: #1a7f37;
+  --accent-green-subtle: rgba(26, 127, 55, 0.08);
+  --accent-amber: #bf8700;
+  --accent-amber-subtle: rgba(191, 135, 0, 0.08);
+  --accent-red: #cf222e;
+  --accent-red-subtle: rgba(207, 34, 46, 0.06);
+  --accent-blue: #0969da;
+  --accent-blue-subtle: rgba(9, 105, 218, 0.06);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 * {
@@ -8,13 +25,13 @@
 }
 
 html {
-  background: var(--background);
+  background: var(--bg-canvas);
 }
 
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
   font-family: var(--font-geist-sans), sans-serif;
 }
 

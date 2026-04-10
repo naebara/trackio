@@ -41,7 +41,7 @@ export default function EntryFormModal({
       onClose={onClose}
       title={topic ? `${topic.name} entry` : "Daily entry"}
       centered
-      radius="xl"
+      radius="md"
       size="md"
     >
       <Stack>

@@ -23,7 +23,7 @@ export default function DayBoardSection({
   onEditEntry,
 }: DayBoardSectionProps) {
   return (
-    <Paper className={classes.section} radius="xl" withBorder data-testid="tracker-day-list">
+    <Paper className={classes.section} radius="md" data-testid="tracker-day-list">
       <Group justify="space-between" align="flex-end">
         <div>
           <Text className={classes.title}>Expected on {formatDayLabel(date)}</Text>
@@ -31,7 +31,7 @@ export default function DayBoardSection({
             Missing stays neutral. Quick actions save immediately.
           </Text>
         </div>
-        <Badge radius="xl" size="lg" variant="light">
+        <Badge radius="md" size="lg" variant="light">
           {topics.length} expected
         </Badge>
       </Group>
@@ -46,7 +46,7 @@ export default function DayBoardSection({
           const progressValue = entry?.value ?? 0;
 
           return (
-            <Paper key={topic.id} className={classes.card} radius="xl">
+            <Paper key={topic.id} className={classes.card} radius="md">
               <Group justify="space-between" align="flex-start" wrap="nowrap">
                 <div className={classes.topicMeta}>
                   <span className={classes.color} style={{ backgroundColor: topic.color }} />
@@ -58,7 +58,7 @@ export default function DayBoardSection({
                   </div>
                 </div>
                 <Group gap="xs">
-                  <Badge radius="xl" variant={entry ? "filled" : "light"} color={entry ? "green" : "gray"}>
+                  <Badge radius="md" variant={entry ? "filled" : "light"} color={entry ? "green" : "gray"}>
                     {entry ? `${entry.value}%` : "Not logged"}
                   </Badge>
                   <QuickLogActions
@@ -70,7 +70,7 @@ export default function DayBoardSection({
               </Group>
               <Progress
                 className={classes.progress}
-                radius="xl"
+                radius="md"
                 size="lg"
                 color={progressValue === 100 ? "green" : progressValue === 0 ? "red" : "blue"}
                 value={entry ? progressValue : 0}

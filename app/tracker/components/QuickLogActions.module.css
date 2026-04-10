@@ -3,19 +3,28 @@
 }
 
 .yes {
-  background: #184e36;
+  background: var(--accent-green);
 }
 
 .yes:hover {
-  background: #133c2a;
+  background: #15803d;
 }
 
 .no {
-  background: #fff0ea;
-  color: #b6461c;
+  background: var(--accent-red-subtle);
+  color: var(--accent-red);
+}
+
+.no:hover {
+  background: rgba(207, 34, 46, 0.12);
 }
 
 .custom {
-  background: #fff;
-  border-color: rgba(15, 23, 42, 0.12);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+
+.custom:hover {
+  background: var(--bg-inset);
 }

@@ -1,50 +1,54 @@
 .section {
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.9);
+  padding: 0;
+  background: transparent;
 }
 
 .title {
-  color: #122033;
-  font-size: 1.2rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
   font-weight: 700;
 }
 
 .subtitle {
-  color: #64748b;
-  margin-top: 0.18rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
 }
 
 .row {
   padding: 1rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 1rem;
-  background: #fbfdff;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
 }
 
 .heading {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
 }
 
 .topicName {
-  color: #122033;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 .topicMeta {
-  color: #64748b;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 .detailRow {
   display: flex;
   gap: 1rem;
-  margin-top: 0.55rem;
+  margin-top: 0.45rem;
   flex-wrap: wrap;
 }
 
 .detail {
-  color: #526071;
-  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-family: var(--font-geist-mono), monospace;
 }

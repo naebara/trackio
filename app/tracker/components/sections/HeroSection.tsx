@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionIcon, Group, Paper, SimpleGrid, Text } from "@mantine/core";
+import { ActionIcon, Group, SimpleGrid, Text } from "@mantine/core";
 import { IconArrowLeft, IconArrowRight, IconPlus } from "@tabler/icons-react";
 import { formatDayLabel, todayKey } from "../../lib/date";
 import { trackerSelectors } from "../../constants/selectors";
@@ -33,7 +33,7 @@ export default function HeroSection({
   const isToday = selectedDate === todayKey();
 
   return (
-    <Paper className={classes.hero} data-testid={trackerSelectors.shell} radius="xl">
+    <div className={classes.hero} data-testid={trackerSelectors.shell}>
       <Group className={classes.toolbar} justify="space-between" align="center" gap="md">
         <div>
           <Text className={classes.dateLabel}>{isToday ? "Today focus" : "Selected day"}</Text>
@@ -41,20 +41,20 @@ export default function HeroSection({
         </div>
         <Group gap="sm">
           <ActionIcon.Group>
-            <ActionIcon radius="xl" variant="white" onClick={onPreviousDay}>
-              <IconArrowLeft size={18} />
+            <ActionIcon radius="md" variant="default" onClick={onPreviousDay}>
+              <IconArrowLeft size={16} />
             </ActionIcon>
             <ActionIcon
-              radius="xl"
+              radius="md"
               variant="filled"
-              color="dark"
+              color="blue"
               data-testid={trackerSelectors.addTopicButton}
               onClick={onAddTopic}
             >
-              <IconPlus size={18} />
+              <IconPlus size={16} />
             </ActionIcon>
-            <ActionIcon radius="xl" variant="white" onClick={onNextDay}>
-              <IconArrowRight size={18} />
+            <ActionIcon radius="md" variant="default" onClick={onNextDay}>
+              <IconArrowRight size={16} />
             </ActionIcon>
           </ActionIcon.Group>
           <input
@@ -73,6 +73,6 @@ export default function HeroSection({
         <StatCard label="Avg. logged %" value={`${stats.averageLoggedValue}%`} />
         <StatCard label="Coverage" value={`${stats.coverageRate}%`} />
       </SimpleGrid>
-    </Paper>
+    </div>
   );
 }

@@ -37,7 +37,7 @@ export default function CalendarSection({
   const leadingBlankCells = Array.from({ length: getDayOfWeek(start) }, (_, index) => index);
 
   return (
-    <Paper className={classes.section} radius="xl" withBorder data-testid="tracker-calendar-grid">
+    <Paper className={classes.section} radius="md" data-testid="tracker-calendar-grid">
       <Group justify="space-between">
         <div>
           <Text className={classes.title}>Month overview</Text>
@@ -46,11 +46,11 @@ export default function CalendarSection({
           </Text>
         </div>
         <Group gap="xs">
-          <ActionIcon radius="xl" variant="default" onClick={() => onMonthChange(addMonths(monthKey, -1))}>
+          <ActionIcon radius="md" variant="default" onClick={() => onMonthChange(addMonths(monthKey, -1))}>
             <IconChevronLeft size={18} />
           </ActionIcon>
           <Text className={classes.monthLabel}>{formatMonthLabel(monthKey)}</Text>
-          <ActionIcon radius="xl" variant="default" onClick={() => onMonthChange(addMonths(monthKey, 1))}>
+          <ActionIcon radius="md" variant="default" onClick={() => onMonthChange(addMonths(monthKey, 1))}>
             <IconChevronRight size={18} />
           </ActionIcon>
         </Group>
