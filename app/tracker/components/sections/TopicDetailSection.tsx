@@ -22,7 +22,7 @@ interface TopicDetailSectionProps {
   topic: Topic;
   entryMap: Map<string, DailyEntry>;
   onBack: () => void;
-  onCycleEntry: (topicId: string, date: string) => void;
+  onQuickLog: (topic: Topic, date: string) => void;
   onEditEntry: (topic: Topic, date: string) => void;
 }
 
@@ -49,7 +49,7 @@ export default function TopicDetailSection({
   topic,
   entryMap,
   onBack,
-  onCycleEntry,
+  onQuickLog,
   onEditEntry,
 }: TopicDetailSectionProps) {
   const [range, setRange] = useState<TimeRange>("month");
@@ -145,7 +145,7 @@ export default function TopicDetailSection({
         onMonthChange={setMonthKey}
         customStart={customStart}
         customEnd={customEnd}
-        onCycleEntry={onCycleEntry}
+        onQuickLog={onQuickLog}
         onEditEntry={onEditEntry}
       />
     </div>

@@ -9,13 +9,14 @@ import { trackerText } from "../../constants/i18n";
 import type { DailyEntry, Topic } from "../../lib/types";
 import classes from "./HabitGridSection.module.css";
 
+const TOUCH_MOVE_THRESHOLD = 10;
+
 const DAY_COUNT = 14;
-const LONG_PRESS_MS = 400;
 
 interface HabitGridSectionProps {
   topics: Topic[];
   entryMap: Map<string, DailyEntry>;
-  onCycleEntry: (topicId: string, date: string) => void;
+  onQuickLog: (topic: Topic, date: string) => void;
   onEditEntry: (topic: Topic, date: string) => void;
   onAddTopic: () => void;
   onTopicClick: (topic: Topic) => void;
@@ -46,51 +47,19 @@ function getCellDisplay(entry?: DailyEntry): string {
   return `${entry.value}%`;
 }
 
-function useLongPress(onLongPress: () => void, onTap: () => void) {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const firedRef = useRef(false);
-
-  const start = useCallback(() => {
-    firedRef.current = false;
-    timerRef.current = setTimeout(() => {
-      firedRef.current = true;
-      onLongPress();
-    }, LONG_PRESS_MS);
-  }, [onLongPress]);
-
-  const end = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (!firedRef.current) onTap();
-  }, [onTap]);
-
-  const cancel = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    firedRef.current = false;
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: end,
-    onMouseLeave: cancel,
-    onTouchStart: start,
-    onTouchEnd: end,
-    onTouchCancel: cancel,
-  };
-}
-
 function GridCell({
   topic,
   date,
   entry,
   expected,
-  onCycle,
+  onQuickLog,
   onEdit,
 }: {
   topic: Topic;
   date: string;
   entry?: DailyEntry;
   expected: boolean;
-  onCycle: () => void;
+  onQuickLog: () => void;
   onEdit: () => void;
 }) {
   const display = getCellDisplay(entry);
@@ -98,10 +67,23 @@ function GridCell({
     ? entry.value >= 50 ? "done" : "missed"
     : expected ? "pending" : "inactive";
 
-  const press = useLongPress(
-    () => { if (expected) onEdit(); },
-    () => { if (expected) onCycle(); },
-  );
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!expected || !touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y);
+    touchStartRef.current = null;
+    if (dx > TOUCH_MOVE_THRESHOLD || dy > TOUCH_MOVE_THRESHOLD) return;
+    e.preventDefault();
+    onQuickLog();
+  }, [expected, onQuickLog]);
 
   return (
     <td>
@@ -109,12 +91,13 @@ function GridCell({
         type="button"
         className={classes.cell}
         data-state={state}
+        onClick={() => { if (expected) onQuickLog(); }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         onContextMenu={(e) => {
           e.preventDefault();
           if (expected) onEdit();
         }}
-        {...press}
-        onClick={undefined}
       >
         {entry ? display : expected ? "○" : "·"}
       </button>
@@ -125,7 +108,7 @@ function GridCell({
 export default function HabitGridSection({
   topics,
   entryMap,
-  onCycleEntry,
+  onQuickLog,
   onEditEntry,
   onAddTopic,
   onTopicClick,
@@ -199,7 +182,7 @@ export default function HabitGridSection({
                       date={date}
                       entry={entry}
                       expected={expected}
-                      onCycle={() => onCycleEntry(topic.id, date)}
+                      onQuickLog={() => onQuickLog(topic, date)}
                       onEdit={() => onEditEntry(topic, date)}
                     />
                   );

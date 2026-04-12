@@ -8,4 +8,5 @@ export const trackerSelectors = {
   insightsPanel: "tracker-insights-panel",
   topicModal: "tracker-topic-modal",
   entryModal: "tracker-entry-modal",
+  quickStatusModal: "tracker-quick-status-modal",
 } as const;

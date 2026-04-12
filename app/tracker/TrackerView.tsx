@@ -15,6 +15,7 @@ import MatrixSection from "./components/sections/MatrixSection";
 import TopicDetailSection from "./components/sections/TopicDetailSection";
 import TopicsSection from "./components/sections/TopicsSection";
 import EntryFormModal from "./components/EntryFormModal";
+import QuickStatusModal from "./components/QuickStatusModal";
 import TopicFormModal from "./components/TopicFormModal";
 import TrackerShell from "./components/TrackerShell";
 import { useTrackerApp } from "./hooks/useTrackerApp";
@@ -43,6 +44,7 @@ export default function TrackerView({
   const [editingTopic, setEditingTopic] = useState<Topic | undefined>();
   const [entryDraft, setEntryDraft] = useState<{ topic?: Topic; date?: string }>({});
   const [entryModalNonce, setEntryModalNonce] = useState(0);
+  const [quickDraft, setQuickDraft] = useState<{ topic?: Topic; date?: string }>({});
   const [viewingTopic, setViewingTopic] = useState<Topic | null>(null);
 
   const expectedTopicsForSelectedDate = useMemo(
@@ -80,6 +82,10 @@ export default function TrackerView({
     setEntryModalNonce((current) => current + 1);
   }
 
+  function openQuickStatusModal(topic: Topic, date: string) {
+    setQuickDraft({ topic, date });
+  }
+
   function saveQuickValue(topicId: string, date: string, value: number) {
     const current = tracker.entryMap.get(`${topicId}:${date}`);
     tracker.upsertEntry({
@@ -90,17 +96,15 @@ export default function TrackerView({
     });
   }
 
-  function cycleEntryValue(topicId: string, date: string) {
-    const entry = tracker.entryMap.get(`${topicId}:${date}`);
-    if (!entry) {
-      tracker.upsertEntry({ topicId, date, value: 100, note: "" });
-    } else if (entry.value === 100) {
-      tracker.upsertEntry({ topicId, date, value: 0, note: entry.note });
-    } else if (entry.value === 0) {
-      tracker.deleteEntry(topicId, date);
-    } else {
-      tracker.upsertEntry({ topicId, date, value: 100, note: entry.note });
-    }
+  function saveQuickStatus(topicId: string, date: string, value: number) {
+    const current = tracker.entryMap.get(`${topicId}:${date}`);
+    tracker.upsertEntry({ topicId, date, value, note: current?.note ?? "" });
+    setQuickDraft({});
+  }
+
+  function clearQuickStatus(topicId: string, date: string) {
+    tracker.deleteEntry(topicId, date);
+    setQuickDraft({});
   }
 
   return (
@@ -132,14 +136,14 @@ export default function TrackerView({
                   topic={viewingTopic}
                   entryMap={tracker.entryMap}
                   onBack={() => setViewingTopic(null)}
-                  onCycleEntry={cycleEntryValue}
+                  onQuickLog={openQuickStatusModal}
                   onEditEntry={openEntryModal}
                 />
               ) : (
                 <HabitGridSection
                   topics={tracker.activeTopics}
                   entryMap={tracker.entryMap}
-                  onCycleEntry={cycleEntryValue}
+                  onQuickLog={openQuickStatusModal}
                   onEditEntry={openEntryModal}
                   onAddTopic={openCreateTopicModal}
                   onTopicClick={setViewingTopic}
@@ -258,6 +262,19 @@ export default function TrackerView({
           tracker.deleteEntry(topicId, date);
           setEntryDraft({});
         }}
+      />
+      <QuickStatusModal
+        opened={Boolean(quickDraft.topic && quickDraft.date)}
+        topic={quickDraft.topic}
+        date={quickDraft.date}
+        entry={
+          quickDraft.topic && quickDraft.date
+            ? tracker.entryMap.get(`${quickDraft.topic.id}:${quickDraft.date}`)
+            : undefined
+        }
+        onClose={() => setQuickDraft({})}
+        onSave={saveQuickStatus}
+        onClear={clearQuickStatus}
       />
     </>
   );

@@ -27,7 +27,7 @@ interface TopicCalendarProps {
   onMonthChange: (key: string) => void;
   customStart: string;
   customEnd: string;
-  onCycleEntry: (topicId: string, date: string) => void;
+  onQuickLog: (topic: Topic, date: string) => void;
   onEditEntry: (topic: Topic, date: string) => void;
 }
 
@@ -61,12 +61,12 @@ function MiniMonth({
   monthKey,
   topic,
   entryMap,
-  onCycle,
+  onQuickLog,
 }: {
   monthKey: string;
   topic: Topic;
   entryMap: Map<string, DailyEntry>;
-  onCycle: (topicId: string, date: string) => void;
+  onQuickLog: (topic: Topic, date: string) => void;
 }) {
   const start = getMonthStart(monthKey);
   const end = getMonthEnd(monthKey);
@@ -93,7 +93,7 @@ function MiniMonth({
               data-level={level}
               data-today={date === todayKey() || undefined}
               title={`${date}: ${entry ? `${entry.value}%` : expected ? "Not logged" : "—"}`}
-              onClick={() => { if (expected) onCycle(topic.id, date); }}
+              onClick={() => { if (expected) onQuickLog(topic, date); }}
             />
           );
         })}
@@ -110,7 +110,7 @@ export default function TopicCalendar({
   onMonthChange,
   customStart,
   customEnd,
-  onCycleEntry,
+  onQuickLog,
   onEditEntry,
 }: TopicCalendarProps) {
   const today = todayKey();
@@ -130,7 +130,7 @@ export default function TopicCalendar({
               className={classes.weekDay}
               data-level={level}
               data-today={date === today || undefined}
-              onClick={() => { if (expected) onCycleEntry(topic.id, date); }}
+              onClick={() => { if (expected) onQuickLog(topic, date); }}
               onContextMenu={(e) => { e.preventDefault(); if (expected) onEditEntry(topic, date); }}
             >
               <span className={classes.weekAbbr}>{getDayAbbr(date)}</span>
@@ -177,7 +177,7 @@ export default function TopicCalendar({
                 className={classes.monthDay}
                 data-level={level}
                 data-today={date === today || undefined}
-                onClick={() => { if (expected) onCycleEntry(topic.id, date); }}
+                onClick={() => { if (expected) onQuickLog(topic, date); }}
                 onContextMenu={(e) => { e.preventDefault(); if (expected) onEditEntry(topic, date); }}
               >
                 <span className={classes.monthDayNum}>{Number(date.slice(-2))}</span>
@@ -228,7 +228,7 @@ export default function TopicCalendar({
                   monthKey={mk}
                   topic={topic}
                   entryMap={entryMap}
-                  onCycle={onCycleEntry}
+                  onQuickLog={onQuickLog}
                 />
               );
             })}
