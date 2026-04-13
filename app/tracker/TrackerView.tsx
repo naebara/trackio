@@ -11,7 +11,6 @@ import DayBoardSection from "./components/sections/DayBoardSection";
 import HabitGridSection from "./components/sections/HabitGridSection";
 import HeroSection from "./components/sections/HeroSection";
 import InsightsSection from "./components/sections/InsightsSection";
-import MatrixSection from "./components/sections/MatrixSection";
 import TopicDetailSection from "./components/sections/TopicDetailSection";
 import TopicsSection from "./components/sections/TopicsSection";
 import EntryFormModal from "./components/EntryFormModal";
@@ -50,10 +49,6 @@ export default function TrackerView({
   const expectedTopicsForSelectedDate = useMemo(
     () => tracker.activeTopics.filter((topic) => isTopicExpectedOnDate(topic, selectedDate)),
     [selectedDate, tracker.activeTopics],
-  );
-  const matrixDates = useMemo(
-    () => eachDayInRange(addDays(selectedDate, -13), selectedDate),
-    [selectedDate],
   );
   const monthSummaries = useMemo(
     () => tracker.getMonthSummaries(monthKey),
@@ -188,19 +183,7 @@ export default function TrackerView({
             </Stack>
           )}
 
-          {activeTab === "matrix" && (
-            <Box className={classes.sectionCard}>
-              <MatrixSection
-                topics={tracker.activeTopics}
-                dates={matrixDates}
-                entryMap={tracker.entryMap}
-                onSelectCell={(topic, date) => {
-                  handleSelectedDateChange(date);
-                  openEntryModal(topic, date);
-                }}
-              />
-            </Box>
-          )}
+
 
           {activeTab === "topics" && (
             <Box className={classes.sectionCard}>

@@ -72,7 +72,7 @@ export default function DayBoardSection({
                 className={classes.progress}
                 radius="md"
                 size="lg"
-                color={progressValue === 100 ? "green" : progressValue === 0 ? "red" : "blue"}
+                color={entry ? (entry.value >= 50 ? "green" : "red") : "blue"}
                 value={entry ? progressValue : 0}
               />
               {entry?.note && <Text className={classes.note}>{entry.note}</Text>}

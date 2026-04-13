@@ -16,7 +16,6 @@ import {
   BarChart3,
   Calendar,
   CheckSquare,
-  Grid,
   ListTodo,
 } from "lucide-react";
 import { SignOutButton } from "@/app/components/sign-out-button";
@@ -33,7 +32,6 @@ interface TrackerShellProps {
 const navItems = [
   { value: "today", label: trackerText.todayTab, icon: CheckSquare },
   { value: "calendar", label: trackerText.calendarTab, icon: Calendar },
-  { value: "matrix", label: trackerText.matrixTab, icon: Grid },
   { value: "topics", label: trackerText.topicsTab, icon: ListTodo },
   { value: "insights", label: trackerText.insightsTab, icon: BarChart3 },
 ];

@@ -131,7 +131,7 @@
 }
 
 .cell[data-state="done"] {
-  color: var(--accent-blue);
+  color: var(--accent-green);
 }
 
 .cell[data-state="missed"] {

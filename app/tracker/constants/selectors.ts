@@ -3,7 +3,6 @@ export const trackerSelectors = {
   addTopicButton: "tracker-add-topic-button",
   todayList: "tracker-day-list",
   calendarGrid: "tracker-calendar-grid",
-  matrixGrid: "tracker-matrix-grid",
   topicList: "tracker-topic-list",
   insightsPanel: "tracker-insights-panel",
   topicModal: "tracker-topic-modal",

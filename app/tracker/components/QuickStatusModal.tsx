@@ -19,8 +19,7 @@ interface QuickStatusModalProps {
 const CIRCUMFERENCE = 2 * Math.PI * 42;
 
 function getRingColor(value: number): string {
-  if (value >= 80) return "var(--accent-green, #22c55e)";
-  if (value >= 50) return "var(--accent-blue, #3b82f6)";
+  if (value >= 50) return "var(--accent-green, #22c55e)";
   if (value > 0) return "var(--accent-orange, #f59e0b)";
   return "var(--accent-red, #ef4444)";
 }
