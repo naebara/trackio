@@ -13,6 +13,7 @@
     "version:year": "node scripts/version-bump.mjs year",
     "setup": "node scripts/setup.js",
     "db:setup": "node scripts/db-local-setup.js",
+    "db:restore-prod": "./scripts/restore-prod-db.sh",
     "db:prepare-migration": "node scripts/db-prepare-migration.js",
     "db:migrate": "npx prisma migrate deploy",
     "db:generate": "prisma generate",
