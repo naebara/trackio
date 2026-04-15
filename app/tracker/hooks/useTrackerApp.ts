@@ -36,8 +36,8 @@ export function useTrackerApp(initialState: TrackerState) {
     [state.topics],
   );
   const todayTopics = useMemo(
-    () => activeTopics.filter((topic) => isTopicExpectedOnDateWithEntries(topic, today, entryMap)),
-    [activeTopics, entryMap, today],
+    () => activeTopics.filter((topic) => isTopicExpectedOnDateWithEntries(topic, today)),
+    [activeTopics, today],
   );
   const globalStats = useMemo(
     () => calculateGlobalStats(activeTopics, state.entries, rangeStart, today),

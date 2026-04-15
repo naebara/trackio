@@ -33,8 +33,7 @@ function getRecurrenceRule(input: RecurrenceRule | Topic) {
 }
 
 function formatUnit(unit: RecurrenceUnit, count: number) {
-  const singular = unit;
-  if (count === 1) return singular;
+  if (count === 1) return unit;
 
   switch (unit) {
     case "day":
@@ -53,21 +52,17 @@ export function isTargetRecurrence(input: RecurrenceRule | Topic) {
 }
 
 export function getRecurrenceTarget(input: RecurrenceRule | Topic) {
-  const rule = getRecurrenceRule(input);
-  return Math.max(1, rule.target ?? 1);
+  return Math.max(1, getRecurrenceRule(input).target ?? 1);
 }
 
 export function getRecurrenceUnit(input: RecurrenceRule | Topic) {
-  const rule = getRecurrenceRule(input);
-  return rule.unit ?? "week";
+  return getRecurrenceRule(input).unit ?? "week";
 }
 
 export function isTopicActiveOnDate(topic: Topic, date: string) {
   const endDate = normalizeEndDate(topic);
-
   if (compareDateKeys(date, topic.startDate) < 0) return false;
   if (endDate && compareDateKeys(date, endDate) > 0) return false;
-
   return true;
 }
 
@@ -101,10 +96,7 @@ function matchesWeekly(date: string, startDate: string, dayOfWeek: number, inter
 }
 
 function matchesMonthly(
-  date: string,
-  startDate: string,
-  dayOfMonth: number,
-  interval = 1,
+  date: string, startDate: string, dayOfMonth: number, interval = 1,
 ) {
   const parsedDate = parseDateKey(date);
   const expectedDay = Math.min(
@@ -137,7 +129,7 @@ export function getPeriodRange(date: string, unit: RecurrenceUnit) {
   }
 }
 
-function sumRecordedTargetCount(
+function countCompletedTargetDays(
   topicId: string,
   start: string,
   end: string,
@@ -146,7 +138,8 @@ function sumRecordedTargetCount(
   if (compareDateKeys(start, end) > 0) return 0;
 
   return eachDayInRange(start, end).reduce(
-    (total, currentDate) => total + Math.max(0, entryMap.get(`${topicId}:${currentDate}`)?.value ?? 0),
+    (total, currentDate) =>
+      total + ((entryMap.get(`${topicId}:${currentDate}`)?.value ?? 0) > 0 ? 1 : 0),
     0,
   );
 }
@@ -180,11 +173,11 @@ export function getTargetProgressForDate(
     };
   }
 
-  const completed = sumRecordedTargetCount(topic.id, activeStart, activeEnd, entryMap);
+  const completed = countCompletedTargetDays(topic.id, activeStart, activeEnd, entryMap);
   const previousDate = addDays(date, -1);
   const completedBeforeDate =
     compareDateKeys(previousDate, activeStart) >= 0
-      ? sumRecordedTargetCount(topic.id, activeStart, previousDate, entryMap)
+      ? countCompletedTargetDays(topic.id, activeStart, previousDate, entryMap)
       : 0;
 
   return {
@@ -199,8 +192,8 @@ export function getTargetProgressForDate(
   };
 }
 
-export function getEntryValueLabel(topic: Topic, value: number) {
-  return isTargetRecurrence(topic) ? `${value}x` : `${value}%`;
+export function getEntryValueLabel(_topic: Topic, value: number) {
+  return `${value}%`;
 }
 
 export function getTargetProgressLabel(
@@ -209,19 +202,11 @@ export function getTargetProgressLabel(
   entryMap: Map<string, DailyEntry>,
 ) {
   const progress = getTargetProgressForDate(topic, date, entryMap);
-
   if (!progress) return null;
-
   return `${Math.min(progress.completed, progress.target)} / ${progress.target} this ${progress.unit}`;
 }
 
-export function isExpectedOnDate(
-  rule: RecurrenceRule,
-  startDate: string,
-  date: string,
-  entryMap?: Map<string, DailyEntry>,
-  topic?: Topic,
-) {
+export function isExpectedOnDate(rule: RecurrenceRule, startDate: string, date: string) {
   switch (rule.type) {
     case "daily":
       return true;
@@ -239,16 +224,7 @@ export function isExpectedOnDate(
         1,
       );
     case "timesPerPeriod":
-      if (!topic || !entryMap) {
-        return true;
-      }
-
-      const progress = getTargetProgressForDate(topic, date, entryMap);
-      if (!progress) {
-        return true;
-      }
-
-      return progress.completedBeforeDate < progress.target || progress.currentValue > 0;
+      return true;
     case "custom":
       if (rule.unit === "week") {
         return matchesWeekly(
@@ -279,13 +255,9 @@ export function isTopicExpectedOnDate(topic: Topic, date: string) {
   return isExpectedOnDate(topic.recurrence, topic.startDate, date);
 }
 
-export function isTopicExpectedOnDateWithEntries(
-  topic: Topic,
-  date: string,
-  entryMap: Map<string, DailyEntry>,
-) {
+export function isTopicExpectedOnDateWithEntries(topic: Topic, date: string) {
   if (!isTopicActiveOnDate(topic, date)) return false;
-  return isExpectedOnDate(topic.recurrence, topic.startDate, date, entryMap, topic);
+  return isExpectedOnDate(topic.recurrence, topic.startDate, date);
 }
 
 export function getRecurrenceSummary(topic: Topic) {
@@ -308,7 +280,7 @@ export function getRecurrenceSummary(topic: Topic) {
     case "monthly":
       return `Monthly on day ${recurrence.dayOfMonth ?? getDayOfMonth(topic.startDate)}`;
     case "timesPerPeriod":
-      return `${getRecurrenceTarget(recurrence)} time(s) / ${formatUnit(
+      return `${getRecurrenceTarget(recurrence)} time(s) per ${formatUnit(
         getRecurrenceUnit(recurrence),
         getRecurrenceTarget(recurrence),
       )}`;

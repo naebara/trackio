@@ -7,5 +7,8 @@ export const trackerSelectors = {
   insightsPanel: "tracker-insights-panel",
   topicModal: "tracker-topic-modal",
   entryModal: "tracker-entry-modal",
+  entryNoteInput: "tracker-entry-note-input",
   quickStatusModal: "tracker-quick-status-modal",
+  quickStatusNoteInput: "tracker-quick-status-note-input",
+  topicCalendarDay: "tracker-topic-calendar-day",
 } as const;

@@ -2,6 +2,7 @@
 
 import { ActionIcon, Group, SimpleGrid, Text } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { trackerSelectors } from "../../constants/selectors";
 import {
   addDays,
   addMonths,
@@ -15,7 +16,6 @@ import {
 import {
   getEntryValueLabel,
   isTopicExpectedOnDateWithEntries,
-  isTargetRecurrence,
 } from "../../lib/recurrence";
 import type { DailyEntry, Topic } from "../../lib/types";
 import classes from "./TopicCalendar.module.css";
@@ -30,7 +30,6 @@ interface TopicCalendarProps {
   onMonthChange: (key: string) => void;
   customStart: string;
   customEnd: string;
-  onQuickLog: (topic: Topic, date: string) => void;
   onEditEntry: (topic: Topic, date: string) => void;
 }
 
@@ -63,12 +62,12 @@ function MiniMonth({
   monthKey,
   topic,
   entryMap,
-  onQuickLog,
+  onEditEntry,
 }: {
   monthKey: string;
   topic: Topic;
   entryMap: Map<string, DailyEntry>;
-  onQuickLog: (topic: Topic, date: string) => void;
+  onEditEntry: (topic: Topic, date: string) => void;
 }) {
   const start = getMonthStart(monthKey);
   const end = getMonthEnd(monthKey);
@@ -85,17 +84,18 @@ function MiniMonth({
         ))}
         {days.map((date) => {
           const entry = entryMap.get(`${topic.id}:${date}`);
-          const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
+          const expected = isTopicExpectedOnDateWithEntries(topic, date);
           const level = getCellLevel(entry, expected);
           return (
             <button
               key={date}
               type="button"
+              data-testid={`${trackerSelectors.topicCalendarDay}-${date}`}
               className={classes.miniCell}
               data-level={level}
               data-today={date === todayKey() || undefined}
               title={`${date}: ${entry ? getEntryValueLabel(topic, entry.value) : expected ? "Not logged" : "—"}`}
-              onClick={() => { if (expected) onQuickLog(topic, date); }}
+              onClick={() => { if (expected) onEditEntry(topic, date); }}
             />
           );
         })}
@@ -112,7 +112,6 @@ export default function TopicCalendar({
   onMonthChange,
   customStart,
   customEnd,
-  onQuickLog,
   onEditEntry,
 }: TopicCalendarProps) {
   const today = todayKey();
@@ -123,24 +122,22 @@ export default function TopicCalendar({
       <div className={classes.weekGrid}>
         {days.map((date) => {
           const entry = entryMap.get(`${topic.id}:${date}`);
-          const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
+          const expected = isTopicExpectedOnDateWithEntries(topic, date);
           const level = getCellLevel(entry, expected);
           return (
             <button
               key={date}
               type="button"
+              data-testid={`${trackerSelectors.topicCalendarDay}-${date}`}
               className={classes.weekDay}
               data-level={level}
               data-today={date === today || undefined}
-              onClick={() => { if (expected) onQuickLog(topic, date); }}
-              onContextMenu={(e) => { e.preventDefault(); if (expected) onEditEntry(topic, date); }}
+              onClick={() => { if (expected) onEditEntry(topic, date); }}
             >
               <span className={classes.weekAbbr}>{getDayAbbr(date)}</span>
               <span className={classes.weekNum}>{Number(date.slice(-2))}</span>
               <span className={classes.weekStatus} data-level={level}>
-                {isTargetRecurrence(topic) && entry
-                  ? getEntryValueLabel(topic, entry.value)
-                  : getCellLabel(entry, expected)}
+                {getCellLabel(entry, expected)}
               </span>
             </button>
           );
@@ -172,26 +169,22 @@ export default function TopicCalendar({
           {Array.from({ length: blanks }, (_, i) => <div key={`b-${i}`} />)}
           {days.map((date) => {
             const entry = entryMap.get(`${topic.id}:${date}`);
-            const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
+            const expected = isTopicExpectedOnDateWithEntries(topic, date);
             const level = getCellLevel(entry, expected);
             return (
               <button
                 key={date}
                 type="button"
+                data-testid={`${trackerSelectors.topicCalendarDay}-${date}`}
                 className={classes.monthDay}
                 data-level={level}
                 data-today={date === today || undefined}
-                onClick={() => { if (expected) onQuickLog(topic, date); }}
-                onContextMenu={(e) => { e.preventDefault(); if (expected) onEditEntry(topic, date); }}
+                onClick={() => { if (expected) onEditEntry(topic, date); }}
               >
                 <span className={classes.monthDayNum}>{Number(date.slice(-2))}</span>
                 {entry && (
                   <span className={classes.monthDayVal}>
-                    {isTargetRecurrence(topic)
-                      ? getEntryValueLabel(topic, entry.value)
-                      : entry.value > 0 && entry.value < 100
-                        ? `${entry.value}%`
-                        : ""}
+                    {entry.value > 0 && entry.value < 100 ? `${entry.value}%` : ""}
                   </span>
                 )}
               </button>
@@ -232,7 +225,7 @@ export default function TopicCalendar({
                   monthKey={mk}
                   topic={topic}
                   entryMap={entryMap}
-                  onQuickLog={onQuickLog}
+                  onEditEntry={onEditEntry}
                 />
               );
             })}

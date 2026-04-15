@@ -2,7 +2,9 @@
 
 import { Button, Group, Modal, NumberInput, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import { useState } from "react";
-import { getRecurrenceTarget, isTargetRecurrence } from "../lib/recurrence";
+import { trackerSelectors } from "../constants/selectors";
+import { trackerText } from "../constants/i18n";
+import { getRecurrenceSummary, isTargetRecurrence } from "../lib/recurrence";
 import type { DailyEntry, Topic } from "../lib/types";
 import QuickLogActions from "./QuickLogActions";
 import classes from "./EntryFormModal.module.css";
@@ -27,9 +29,7 @@ export default function EntryFormModal({
   onDelete,
 }: EntryFormModalProps) {
   const isTargetTopic = topic ? isTargetRecurrence(topic) : false;
-  const [value, setValue] = useState(
-    entry?.value ?? (isTargetTopic ? 1 : 100),
-  );
+  const [value, setValue] = useState(entry?.value ?? 100);
   const [note, setNote] = useState(entry?.note ?? "");
 
   function handleSave() {
@@ -51,7 +51,7 @@ export default function EntryFormModal({
       <Stack>
         <Text size="sm" c="dimmed">
           {isTargetTopic
-            ? "Save how many completions happened on this date. The tracker aggregates them inside the selected period."
+            ? getRecurrenceSummary(topic!)
             : "Missing entries stay neutral in the stats. Only saved values change completion."}
         </Text>
         <Group grow>
@@ -59,21 +59,22 @@ export default function EntryFormModal({
           <TextInput label="Topic" value={topic?.name ?? ""} readOnly />
         </Group>
         <QuickLogActions
-          onYes={() => setValue(isTargetTopic ? Number(value || 0) + 1 : 100)}
+          onYes={() => setValue(100)}
           onNo={() => setValue(0)}
-          onCustom={() => setValue(isTargetTopic ? (topic ? getRecurrenceTarget(topic) : 1) : 65)}
+          onCustom={() => setValue(65)}
         />
         <NumberInput
-          label={isTargetTopic ? "Times completed on this date" : "Completion percentage"}
+          label="Completion percentage"
           min={0}
-          max={isTargetTopic ? 100 : 100}
-          step={isTargetTopic ? 1 : 5}
+          max={100}
+          step={5}
           value={value}
           onChange={(next) => setValue(Number(next) || 0)}
         />
         <Textarea
-          label="Note"
-          placeholder="Optional note for context, blockers, or nuance."
+          data-testid={trackerSelectors.entryNoteInput}
+          label={trackerText.note}
+          placeholder={trackerText.notesPlaceholder}
           minRows={4}
           value={note}
           onChange={(event) => setNote(event.currentTarget.value)}
@@ -87,7 +88,7 @@ export default function EntryFormModal({
             }}
             disabled={!entry}
           >
-            Delete entry
+            {trackerText.deleteEntry}
           </Button>
           <Group>
             <Button variant="default" onClick={onClose}>

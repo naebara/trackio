@@ -5,9 +5,7 @@ import { formatDayLabel } from "../../lib/date";
 import {
   getEntryValueLabel,
   getRecurrenceSummary,
-  getTargetProgressForDate,
   getTargetProgressLabel,
-  isTargetRecurrence,
 } from "../../lib/recurrence";
 import type { DailyEntry, Topic } from "../../lib/types";
 import QuickLogActions from "../QuickLogActions";
@@ -49,16 +47,13 @@ export default function DayBoardSection({
         )}
         {topics.map((topic) => {
           const entry = entryMap.get(`${topic.id}:${date}`);
-          const targetProgress = getTargetProgressForDate(topic, date, entryMap);
-          const progressValue = targetProgress
-            ? Math.min(100, Math.round((targetProgress.completed / targetProgress.target) * 100))
-            : entry?.value ?? 0;
-          const currentValue = entry?.value ?? 0;
+          const progressValue = entry?.value ?? 0;
           const badgeLabel = entry
             ? getEntryValueLabel(topic, entry.value)
             : "Not logged";
-          const summaryLabel = targetProgress
-            ? getTargetProgressLabel(topic, date, entryMap)
+          const targetProgressLabel = getTargetProgressLabel(topic, date, entryMap);
+          const summaryLabel = targetProgressLabel
+            ? `${getRecurrenceSummary(topic)} • ${targetProgressLabel}`
             : getRecurrenceSummary(topic);
 
           return (
@@ -78,13 +73,7 @@ export default function DayBoardSection({
                     {badgeLabel}
                   </Badge>
                   <QuickLogActions
-                    onYes={() =>
-                      onLogValue(
-                        topic,
-                        date,
-                        isTargetRecurrence(topic) ? currentValue + 1 : 100,
-                      )
-                    }
+                    onYes={() => onLogValue(topic, date, 100)}
                     onNo={() => onLogValue(topic, date, 0)}
                     onCustom={() => onEditEntry(topic, date)}
                   />

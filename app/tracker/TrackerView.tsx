@@ -44,14 +44,15 @@ export default function TrackerView({
   const [entryDraft, setEntryDraft] = useState<{ topic?: Topic; date?: string }>({});
   const [entryModalNonce, setEntryModalNonce] = useState(0);
   const [quickDraft, setQuickDraft] = useState<{ topic?: Topic; date?: string }>({});
+  const [quickModalNonce, setQuickModalNonce] = useState(0);
   const [viewingTopic, setViewingTopic] = useState<Topic | null>(null);
 
   const expectedTopicsForSelectedDate = useMemo(
     () =>
       tracker.activeTopics.filter((topic) =>
-        isTopicExpectedOnDateWithEntries(topic, selectedDate, tracker.entryMap),
+        isTopicExpectedOnDateWithEntries(topic, selectedDate),
       ),
-    [selectedDate, tracker.activeTopics, tracker.entryMap],
+    [selectedDate, tracker.activeTopics],
   );
   const monthSummaries = useMemo(
     () => tracker.getMonthSummaries(monthKey),
@@ -82,6 +83,7 @@ export default function TrackerView({
 
   function openQuickStatusModal(topic: Topic, date: string) {
     setQuickDraft({ topic, date });
+    setQuickModalNonce((current) => current + 1);
   }
 
   function saveQuickValue(topic: Topic, date: string, value: number) {
@@ -94,9 +96,8 @@ export default function TrackerView({
     });
   }
 
-  function saveQuickStatus(topicId: string, date: string, value: number) {
-    const current = tracker.entryMap.get(`${topicId}:${date}`);
-    tracker.upsertEntry({ topicId, date, value, note: current?.note ?? "" });
+  function saveQuickStatus(topicId: string, date: string, value: number, note: string) {
+    tracker.upsertEntry({ topicId, date, value, note });
     setQuickDraft({});
   }
 
@@ -134,7 +135,6 @@ export default function TrackerView({
                   topic={viewingTopic}
                   entryMap={tracker.entryMap}
                   onBack={() => setViewingTopic(null)}
-                  onQuickLog={openQuickStatusModal}
                   onEditEntry={openEntryModal}
                 />
               ) : (
@@ -252,8 +252,8 @@ export default function TrackerView({
       <QuickStatusModal
         key={
           quickDraft.topic && quickDraft.date
-            ? `quick-${quickDraft.topic.id}-${quickDraft.date}`
-            : "quick-empty"
+            ? `quick-${quickDraft.topic.id}-${quickDraft.date}-${quickModalNonce}`
+            : `quick-empty-${quickModalNonce}`
         }
         opened={Boolean(quickDraft.topic && quickDraft.date)}
         topic={quickDraft.topic}

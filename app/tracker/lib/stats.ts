@@ -28,7 +28,7 @@ export function buildTopicCells(topic: Topic, dates: string[], entryMap: Map<str
   return dates.map<TopicCell>((date) => {
     const entry = entryMap.get(`${topic.id}:${date}`);
     const topicActive = isTopicActiveOnDate(topic, date);
-    const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
+    const expected = isTopicExpectedOnDateWithEntries(topic, date);
 
     if (!expected) {
       return {
@@ -94,6 +94,7 @@ function calculateTargetTopicStats(
   const unit = getRecurrenceUnit(topic);
   const target = getRecurrenceTarget(topic);
   const periods: Array<{ achieved: number }> = [];
+  const loggedEntries: DailyEntry[] = [];
   let cursor = effectiveStart;
 
   while (compareDateKeys(cursor, effectiveEnd) <= 0) {
@@ -103,10 +104,12 @@ function calculateTargetTopicStats(
     const activeEnd =
       compareDateKeys(effectiveEnd, range.end) < 0 ? effectiveEnd : range.end;
 
-    const recorded = eachDayInRange(activeStart, activeEnd).reduce(
-      (sum, date) => sum + Math.max(0, entryMap.get(`${topic.id}:${date}`)?.value ?? 0),
-      0,
-    );
+    const periodEntries = eachDayInRange(activeStart, activeEnd)
+      .map((date) => entryMap.get(`${topic.id}:${date}`))
+      .filter((entry): entry is DailyEntry => Boolean(entry));
+    const recorded = periodEntries.filter((entry) => entry.value > 0).length;
+
+    loggedEntries.push(...periodEntries);
 
     periods.push({ achieved: Math.min(target, recorded) });
     cursor = addDays(range.end, 1);
@@ -115,11 +118,8 @@ function calculateTargetTopicStats(
   const expectedDays = periods.length * target;
   const loggedDays = periods.reduce((sum, period) => sum + period.achieved, 0);
   const pendingDays = Math.max(0, expectedDays - loggedDays);
-  const averageLoggedValue = periods.length
-    ? round(
-        periods.reduce((sum, period) => sum + (period.achieved / target) * 100, 0) /
-          periods.length,
-      )
+  const averageLoggedValue = loggedEntries.length
+    ? round(loggedEntries.reduce((sum, entry) => sum + entry.value, 0) / loggedEntries.length)
     : 0;
   let currentRecordedStreak = 0;
 
@@ -134,7 +134,7 @@ function calculateTargetTopicStats(
     pendingDays,
     averageLoggedValue,
     coverageRate: expectedDays ? round((loggedDays / expectedDays) * 100) : 0,
-    fullSuccessDays: periods.filter((period) => period.achieved >= target).length,
+    fullSuccessDays: loggedEntries.filter((entry) => entry.value === 100).length,
     currentRecordedStreak,
   };
 }
@@ -228,7 +228,7 @@ export function buildDaySummaries(
     let valueSum = 0;
 
     topics.forEach((topic) => {
-      if (!isTopicExpectedOnDateWithEntries(topic, date, entryMap)) return;
+      if (!isTopicExpectedOnDateWithEntries(topic, date)) return;
 
       expectedCount += 1;
       const entry = entryMap.get(`${topic.id}:${date}`);

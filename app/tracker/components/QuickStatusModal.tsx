@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { trackerSelectors } from "../constants/selectors";
 import { trackerText } from "../constants/i18n";
 import {
-  getRecurrenceTarget,
+  getRecurrenceSummary,
   isTargetRecurrence,
 } from "../lib/recurrence";
 import type { DailyEntry, Topic } from "../lib/types";
@@ -16,7 +17,7 @@ interface QuickStatusModalProps {
   date?: string;
   entry?: DailyEntry;
   onClose: () => void;
-  onSave: (topicId: string, date: string, value: number) => void;
+  onSave: (topicId: string, date: string, value: number, note: string) => void;
   onClear: (topicId: string, date: string) => void;
 }
 
@@ -43,7 +44,8 @@ export default function QuickStatusModal({
   onClear,
 }: QuickStatusModalProps) {
   const isTargetTopic = topic ? isTargetRecurrence(topic) : false;
-  const [value, setValue] = useState(entry?.value ?? (isTargetTopic ? 1 : 100));
+  const [value, setValue] = useState(entry?.value ?? 100);
+  const [note, setNote] = useState(entry?.note ?? "");
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -53,8 +55,8 @@ export default function QuickStatusModal({
   );
 
   const handleSave = useCallback(() => {
-    if (topic && date) onSave(topic.id, date, value);
-  }, [topic, date, value, onSave]);
+    if (topic && date) onSave(topic.id, date, value, note.trim());
+  }, [topic, date, value, note, onSave]);
 
   const handleClear = useCallback(() => {
     if (topic && date) onClear(topic.id, date);
@@ -72,13 +74,13 @@ export default function QuickStatusModal({
   if (!opened || !topic || !date) return null;
 
   const offset = CIRCUMFERENCE - (value / 100) * CIRCUMFERENCE;
-  const target = getRecurrenceTarget(topic);
+  const recurrenceHint = isTargetTopic ? getRecurrenceSummary(topic) : null;
 
   const modal = (
     <div
       className={classes.overlay}
       onClick={handleOverlayClick}
-      data-testid="tracker-quick-status-modal"
+      data-testid={trackerSelectors.quickStatusModal}
     >
       <div className={classes.sheet}>
         <div className={classes.handle} />
@@ -89,108 +91,72 @@ export default function QuickStatusModal({
           <span className={classes.dateLabel}>{formatDate(date)}</span>
         </div>
 
-        {isTargetTopic ? (
-          <div className={classes.preview}>
-            <div className={classes.ringWrapper}>
-              <span className={classes.ringLabel}>{value}x</span>
-            </div>
-            <span className={classes.dateLabel}>
-              {target} target for this {topic.recurrence.unit ?? "week"}
-            </span>
+        <div className={classes.preview}>
+          <div className={classes.ringWrapper}>
+            <svg className={classes.ringSvg} viewBox="0 0 100 100">
+              <circle className={classes.ringTrack} cx="50" cy="50" r="42" />
+              <circle
+                className={classes.ringFill}
+                cx="50"
+                cy="50"
+                r="42"
+                stroke={getRingColor(value)}
+                strokeDasharray={CIRCUMFERENCE}
+                strokeDashoffset={offset}
+              />
+            </svg>
+            <span className={classes.ringLabel}>{value}%</span>
           </div>
-        ) : (
-          <div className={classes.preview}>
-            <div className={classes.ringWrapper}>
-              <svg className={classes.ringSvg} viewBox="0 0 100 100">
-                <circle className={classes.ringTrack} cx="50" cy="50" r="42" />
-                <circle
-                  className={classes.ringFill}
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  stroke={getRingColor(value)}
-                  strokeDasharray={CIRCUMFERENCE}
-                  strokeDashoffset={offset}
-                />
-              </svg>
-              <span className={classes.ringLabel}>{value}%</span>
-            </div>
-          </div>
-        )}
+          {recurrenceHint && <span className={classes.previewHint}>{recurrenceHint}</span>}
+        </div>
 
         <div className={classes.quickButtons}>
-          {isTargetTopic ? (
-            <>
-              <button
-                type="button"
-                className={`${classes.quickBtn} ${classes.yesBtn}`}
-                onClick={() => setValue((current) => current + 1)}
-              >
-                +1
-              </button>
-              <button
-                type="button"
-                className={`${classes.quickBtn} ${classes.noBtn}`}
-                data-selected={value === 0}
-                onClick={() => setValue(0)}
-              >
-                Reset
-              </button>
-              <button
-                type="button"
-                className={classes.quickBtn}
-                data-selected={value === target}
-                onClick={() => setValue(target)}
-              >
-                Target
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className={`${classes.quickBtn} ${classes.yesBtn}`}
-                data-selected={value === 100}
-                onClick={() => setValue(100)}
-              >
-                ✓ {trackerText.yes}
-              </button>
-              <button
-                type="button"
-                className={`${classes.quickBtn} ${classes.noBtn}`}
-                data-selected={value === 0}
-                onClick={() => setValue(0)}
-              >
-                ✗ {trackerText.no}
-              </button>
-            </>
-          )}
+          <>
+            <button
+              type="button"
+              className={`${classes.quickBtn} ${classes.yesBtn}`}
+              data-selected={value === 100}
+              onClick={() => setValue(100)}
+            >
+              ✓ {trackerText.yes}
+            </button>
+            <button
+              type="button"
+              className={`${classes.quickBtn} ${classes.noBtn}`}
+              data-selected={value === 0}
+              onClick={() => setValue(0)}
+            >
+              ✗ {trackerText.no}
+            </button>
+          </>
         </div>
 
         <div className={classes.sliderSection}>
-          <div className={classes.sliderLabel}>
-            {isTargetTopic ? "Completions" : trackerText.custom}
-          </div>
-          {isTargetTopic ? (
-            <input
-              type="number"
-              className={classes.slider}
-              min={0}
-              step={1}
-              value={value}
-              onChange={(e) => setValue(Math.max(0, Number(e.target.value) || 0))}
-            />
-          ) : (
-            <input
-              type="range"
-              className={classes.slider}
-              min={0}
-              max={100}
-              step={5}
-              value={value}
-              onChange={(e) => setValue(Number(e.target.value))}
-            />
-          )}
+          <div className={classes.sliderLabel}>{trackerText.custom}</div>
+          <input
+            type="range"
+            className={classes.slider}
+            min={0}
+            max={100}
+            step={5}
+            value={value}
+            onChange={(e) => setValue(Number(e.target.value))}
+          />
+        </div>
+
+        <div className={classes.noteSection}>
+          <label className={classes.noteLabel} htmlFor="tracker-quick-note">
+            {trackerText.note}
+          </label>
+          <textarea
+            id="tracker-quick-note"
+            data-testid={trackerSelectors.quickStatusNoteInput}
+            className={classes.noteInput}
+            rows={3}
+            value={note}
+            placeholder={trackerText.notesPlaceholder}
+            onChange={(event) => setNote(event.currentTarget.value)}
+          />
         </div>
 
         <div className={classes.actions}>
@@ -206,7 +172,7 @@ export default function QuickStatusModal({
             onClick={handleClear}
             disabled={!entry}
           >
-            {trackerText.delete} entry
+            {trackerText.deleteEntry}
           </button>
         </div>
       </div>

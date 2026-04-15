@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef } from "react";
 import { addDays, todayKey } from "../../lib/date";
 import {
   getEntryValueLabel,
-  isTargetRecurrence,
   isTopicExpectedOnDateWithEntries,
 } from "../../lib/recurrence";
 import { trackerText } from "../../constants/i18n";
@@ -46,7 +45,6 @@ function getDayNum(dateStr: string): string {
 
 function getCellDisplay(topic: Topic, entry?: DailyEntry): string {
   if (!entry) return "";
-  if (isTargetRecurrence(topic)) return getEntryValueLabel(topic, entry.value);
   if (entry.value === 100) return "✓";
   if (entry.value === 0) return "✗";
   return getEntryValueLabel(topic, entry.value);
@@ -176,7 +174,7 @@ export default function HabitGridSection({
                 </td>
                 {days.map((date) => {
                   const entry = entryMap.get(`${topic.id}:${date}`);
-                  const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
+                  const expected = isTopicExpectedOnDateWithEntries(topic, date);
 
                   return (
                     <GridCell
