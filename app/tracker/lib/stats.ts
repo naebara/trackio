@@ -1,9 +1,17 @@
 import {
+  addDays,
   compareDateKeys,
   eachDayInRange,
   todayKey,
 } from "./date";
-import { isTopicActiveOnDate, isTopicExpectedOnDate } from "./recurrence";
+import {
+  getPeriodRange,
+  getRecurrenceTarget,
+  getRecurrenceUnit,
+  isTargetRecurrence,
+  isTopicActiveOnDate,
+  isTopicExpectedOnDateWithEntries,
+} from "./recurrence";
 import type { DailyEntry, DaySummary, Topic, TopicCell, TopicStats } from "./types";
 
 function round(value: number) {
@@ -20,7 +28,7 @@ export function buildTopicCells(topic: Topic, dates: string[], entryMap: Map<str
   return dates.map<TopicCell>((date) => {
     const entry = entryMap.get(`${topic.id}:${date}`);
     const topicActive = isTopicActiveOnDate(topic, date);
-    const expected = isTopicExpectedOnDate(topic, date);
+    const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
 
     if (!expected) {
       return {
@@ -46,11 +54,100 @@ export function buildTopicCells(topic: Topic, dates: string[], entryMap: Map<str
   });
 }
 
+function calculateTargetTopicStats(
+  topic: Topic,
+  dates: string[],
+  entryMap: Map<string, DailyEntry>,
+) {
+  if (dates.length === 0) {
+    return {
+      expectedDays: 0,
+      loggedDays: 0,
+      pendingDays: 0,
+      averageLoggedValue: 0,
+      coverageRate: 0,
+      fullSuccessDays: 0,
+      currentRecordedStreak: 0,
+    };
+  }
+
+  const topicEndDate = topic.endDate ?? topic.archivedAt ?? null;
+  const effectiveStart =
+    compareDateKeys(topic.startDate, dates[0]) > 0 ? topic.startDate : dates[0];
+  const effectiveEnd =
+    topicEndDate && compareDateKeys(topicEndDate, dates[dates.length - 1]) < 0
+      ? topicEndDate
+      : dates[dates.length - 1];
+
+  if (compareDateKeys(effectiveStart, effectiveEnd) > 0) {
+    return {
+      expectedDays: 0,
+      loggedDays: 0,
+      pendingDays: 0,
+      averageLoggedValue: 0,
+      coverageRate: 0,
+      fullSuccessDays: 0,
+      currentRecordedStreak: 0,
+    };
+  }
+
+  const unit = getRecurrenceUnit(topic);
+  const target = getRecurrenceTarget(topic);
+  const periods: Array<{ achieved: number }> = [];
+  let cursor = effectiveStart;
+
+  while (compareDateKeys(cursor, effectiveEnd) <= 0) {
+    const range = getPeriodRange(cursor, unit);
+    const activeStart =
+      compareDateKeys(effectiveStart, range.start) > 0 ? effectiveStart : range.start;
+    const activeEnd =
+      compareDateKeys(effectiveEnd, range.end) < 0 ? effectiveEnd : range.end;
+
+    const recorded = eachDayInRange(activeStart, activeEnd).reduce(
+      (sum, date) => sum + Math.max(0, entryMap.get(`${topic.id}:${date}`)?.value ?? 0),
+      0,
+    );
+
+    periods.push({ achieved: Math.min(target, recorded) });
+    cursor = addDays(range.end, 1);
+  }
+
+  const expectedDays = periods.length * target;
+  const loggedDays = periods.reduce((sum, period) => sum + period.achieved, 0);
+  const pendingDays = Math.max(0, expectedDays - loggedDays);
+  const averageLoggedValue = periods.length
+    ? round(
+        periods.reduce((sum, period) => sum + (period.achieved / target) * 100, 0) /
+          periods.length,
+      )
+    : 0;
+  let currentRecordedStreak = 0;
+
+  for (let index = periods.length - 1; index >= 0; index -= 1) {
+    if (periods[index].achieved < target) break;
+    currentRecordedStreak += 1;
+  }
+
+  return {
+    expectedDays,
+    loggedDays,
+    pendingDays,
+    averageLoggedValue,
+    coverageRate: expectedDays ? round((loggedDays / expectedDays) * 100) : 0,
+    fullSuccessDays: periods.filter((period) => period.achieved >= target).length,
+    currentRecordedStreak,
+  };
+}
+
 export function calculateTopicStats(
   topic: Topic,
   dates: string[],
   entryMap: Map<string, DailyEntry>,
 ) {
+  if (isTargetRecurrence(topic)) {
+    return calculateTargetTopicStats(topic, dates, entryMap);
+  }
+
   const cells = buildTopicCells(topic, dates, entryMap).filter((cell) => cell.expected);
   const logged = cells.filter((cell) => cell.entry);
   const pendingDays = cells.filter((cell) => cell.state === "pending").length;
@@ -92,7 +189,7 @@ export function calculateGlobalStats(
       accumulator.loggedDays += stats.loggedDays;
       accumulator.pendingDays += stats.pendingDays;
       accumulator.fullSuccessDays += stats.fullSuccessDays;
-      accumulator.weightedValueSum += stats.averageLoggedValue * stats.loggedDays;
+      accumulator.weightedValueSum += stats.averageLoggedValue * Math.max(stats.expectedDays, 1);
       return accumulator;
     },
     {
@@ -109,7 +206,7 @@ export function calculateGlobalStats(
     loggedDays: totals.loggedDays,
     pendingDays: totals.pendingDays,
     averageLoggedValue: totals.loggedDays
-      ? round(totals.weightedValueSum / totals.loggedDays)
+      ? round(totals.weightedValueSum / Math.max(totals.expectedDays, 1))
       : 0,
     coverageRate: totals.expectedDays
       ? round((totals.loggedDays / totals.expectedDays) * 100)
@@ -131,7 +228,7 @@ export function buildDaySummaries(
     let valueSum = 0;
 
     topics.forEach((topic) => {
-      if (!isTopicExpectedOnDate(topic, date)) return;
+      if (!isTopicExpectedOnDateWithEntries(topic, date, entryMap)) return;
 
       expectedCount += 1;
       const entry = entryMap.get(`${topic.id}:${date}`);

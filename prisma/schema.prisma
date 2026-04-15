@@ -29,6 +29,7 @@ enum TopicRecurrenceType {
   SELECTED_WEEKDAYS
   WEEKLY
   MONTHLY
+  TIMES_PER_PERIOD
   CUSTOM
 }
 
@@ -36,6 +37,7 @@ enum TopicRecurrenceUnit {
   DAY
   WEEK
   MONTH
+  YEAR
 }
 
 model Topic {
@@ -55,7 +57,7 @@ model Topic {
   archivedAt DateTime?
   // Recurrence shape evaluated by the reusable scheduling engine.
   recurrenceType TopicRecurrenceType
-  // Generic interval used by every-X-days and custom recurrences.
+  // Generic interval used by every-X-days, custom recurrences, and target counts.
   recurrenceInterval Int?
   // Weekday indexes (0..6) used for selected-weekday schedules.
   recurrenceWeekdays Int[]

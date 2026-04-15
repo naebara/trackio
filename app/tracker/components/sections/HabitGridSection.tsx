@@ -4,7 +4,11 @@ import { ActionIcon, Group, Text } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef } from "react";
 import { addDays, todayKey } from "../../lib/date";
-import { isTopicExpectedOnDate } from "../../lib/recurrence";
+import {
+  getEntryValueLabel,
+  isTargetRecurrence,
+  isTopicExpectedOnDateWithEntries,
+} from "../../lib/recurrence";
 import { trackerText } from "../../constants/i18n";
 import type { DailyEntry, Topic } from "../../lib/types";
 import classes from "./HabitGridSection.module.css";
@@ -40,29 +44,28 @@ function getDayNum(dateStr: string): string {
   return String(Number(dateStr.slice(-2)));
 }
 
-function getCellDisplay(entry?: DailyEntry): string {
+function getCellDisplay(topic: Topic, entry?: DailyEntry): string {
   if (!entry) return "";
+  if (isTargetRecurrence(topic)) return getEntryValueLabel(topic, entry.value);
   if (entry.value === 100) return "✓";
   if (entry.value === 0) return "✗";
-  return `${entry.value}%`;
+  return getEntryValueLabel(topic, entry.value);
 }
 
 function GridCell({
   topic,
-  date,
   entry,
   expected,
   onQuickLog,
   onEdit,
 }: {
   topic: Topic;
-  date: string;
   entry?: DailyEntry;
   expected: boolean;
   onQuickLog: () => void;
   onEdit: () => void;
 }) {
-  const display = getCellDisplay(entry);
+  const display = getCellDisplay(topic, entry);
   const state = entry
     ? entry.value >= 50 ? "done" : "missed"
     : expected ? "pending" : "inactive";
@@ -173,13 +176,12 @@ export default function HabitGridSection({
                 </td>
                 {days.map((date) => {
                   const entry = entryMap.get(`${topic.id}:${date}`);
-                  const expected = isTopicExpectedOnDate(topic, date);
+                  const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
 
                   return (
                     <GridCell
                       key={date}
                       topic={topic}
-                      date={date}
                       entry={entry}
                       expected={expected}
                       onQuickLog={() => onQuickLog(topic, date)}

@@ -2,6 +2,7 @@
 
 import { Button, Group, Modal, NumberInput, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import { useState } from "react";
+import { getRecurrenceTarget, isTargetRecurrence } from "../lib/recurrence";
 import type { DailyEntry, Topic } from "../lib/types";
 import QuickLogActions from "./QuickLogActions";
 import classes from "./EntryFormModal.module.css";
@@ -25,7 +26,10 @@ export default function EntryFormModal({
   onSave,
   onDelete,
 }: EntryFormModalProps) {
-  const [value, setValue] = useState(entry?.value ?? 100);
+  const isTargetTopic = topic ? isTargetRecurrence(topic) : false;
+  const [value, setValue] = useState(
+    entry?.value ?? (isTargetTopic ? 1 : 100),
+  );
   const [note, setNote] = useState(entry?.note ?? "");
 
   function handleSave() {
@@ -46,17 +50,24 @@ export default function EntryFormModal({
     >
       <Stack>
         <Text size="sm" c="dimmed">
-          Missing entries stay neutral in the stats. Only saved values change completion.
+          {isTargetTopic
+            ? "Save how many completions happened on this date. The tracker aggregates them inside the selected period."
+            : "Missing entries stay neutral in the stats. Only saved values change completion."}
         </Text>
         <Group grow>
           <TextInput label="Date" type="date" value={date ?? ""} readOnly />
           <TextInput label="Topic" value={topic?.name ?? ""} readOnly />
         </Group>
-        <QuickLogActions onYes={() => setValue(100)} onNo={() => setValue(0)} onCustom={() => setValue(65)} />
+        <QuickLogActions
+          onYes={() => setValue(isTargetTopic ? Number(value || 0) + 1 : 100)}
+          onNo={() => setValue(0)}
+          onCustom={() => setValue(isTargetTopic ? (topic ? getRecurrenceTarget(topic) : 1) : 65)}
+        />
         <NumberInput
-          label="Completion percentage"
+          label={isTargetTopic ? "Times completed on this date" : "Completion percentage"}
           min={0}
-          max={100}
+          max={isTargetTopic ? 100 : 100}
+          step={isTargetTopic ? 1 : 5}
           value={value}
           onChange={(next) => setValue(Number(next) || 0)}
         />

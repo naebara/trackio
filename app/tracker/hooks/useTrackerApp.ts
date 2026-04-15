@@ -8,7 +8,7 @@ import {
   saveTopicAction,
 } from "../actions";
 import { addDays, eachDayInRange, getMonthEnd, getMonthStart, todayKey } from "../lib/date";
-import { isTopicExpectedOnDate } from "../lib/recurrence";
+import { isTopicExpectedOnDateWithEntries } from "../lib/recurrence";
 import { trackerReducer } from "../lib/reducer";
 import {
   buildDaySummaries,
@@ -36,8 +36,8 @@ export function useTrackerApp(initialState: TrackerState) {
     [state.topics],
   );
   const todayTopics = useMemo(
-    () => activeTopics.filter((topic) => isTopicExpectedOnDate(topic, today)),
-    [activeTopics, today],
+    () => activeTopics.filter((topic) => isTopicExpectedOnDateWithEntries(topic, today, entryMap)),
+    [activeTopics, entryMap, today],
   );
   const globalStats = useMemo(
     () => calculateGlobalStats(activeTopics, state.entries, rangeStart, today),

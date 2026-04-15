@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { trackerText } from "../constants/i18n";
+import {
+  getRecurrenceTarget,
+  isTargetRecurrence,
+} from "../lib/recurrence";
 import type { DailyEntry, Topic } from "../lib/types";
 import classes from "./QuickStatusModal.module.css";
 
@@ -38,11 +42,8 @@ export default function QuickStatusModal({
   onSave,
   onClear,
 }: QuickStatusModalProps) {
-  const [value, setValue] = useState(entry?.value ?? 100);
-
-  useEffect(() => {
-    setValue(entry?.value ?? 100);
-  }, [entry, opened]);
+  const isTargetTopic = topic ? isTargetRecurrence(topic) : false;
+  const [value, setValue] = useState(entry?.value ?? (isTargetTopic ? 1 : 100));
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -71,6 +72,7 @@ export default function QuickStatusModal({
   if (!opened || !topic || !date) return null;
 
   const offset = CIRCUMFERENCE - (value / 100) * CIRCUMFERENCE;
+  const target = getRecurrenceTarget(topic);
 
   const modal = (
     <div
@@ -87,60 +89,110 @@ export default function QuickStatusModal({
           <span className={classes.dateLabel}>{formatDate(date)}</span>
         </div>
 
-        {/* Percentage preview ring */}
-        <div className={classes.preview}>
-          <div className={classes.ringWrapper}>
-            <svg className={classes.ringSvg} viewBox="0 0 100 100">
-              <circle className={classes.ringTrack} cx="50" cy="50" r="42" />
-              <circle
-                className={classes.ringFill}
-                cx="50"
-                cy="50"
-                r="42"
-                stroke={getRingColor(value)}
-                strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={offset}
-              />
-            </svg>
-            <span className={classes.ringLabel}>{value}%</span>
+        {isTargetTopic ? (
+          <div className={classes.preview}>
+            <div className={classes.ringWrapper}>
+              <span className={classes.ringLabel}>{value}x</span>
+            </div>
+            <span className={classes.dateLabel}>
+              {target} target for this {topic.recurrence.unit ?? "week"}
+            </span>
           </div>
-        </div>
+        ) : (
+          <div className={classes.preview}>
+            <div className={classes.ringWrapper}>
+              <svg className={classes.ringSvg} viewBox="0 0 100 100">
+                <circle className={classes.ringTrack} cx="50" cy="50" r="42" />
+                <circle
+                  className={classes.ringFill}
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  stroke={getRingColor(value)}
+                  strokeDasharray={CIRCUMFERENCE}
+                  strokeDashoffset={offset}
+                />
+              </svg>
+              <span className={classes.ringLabel}>{value}%</span>
+            </div>
+          </div>
+        )}
 
-        {/* Yes / No quick buttons */}
         <div className={classes.quickButtons}>
-          <button
-            type="button"
-            className={`${classes.quickBtn} ${classes.yesBtn}`}
-            data-selected={value === 100}
-            onClick={() => setValue(100)}
-          >
-            ✓ {trackerText.yes}
-          </button>
-          <button
-            type="button"
-            className={`${classes.quickBtn} ${classes.noBtn}`}
-            data-selected={value === 0}
-            onClick={() => setValue(0)}
-          >
-            ✗ {trackerText.no}
-          </button>
+          {isTargetTopic ? (
+            <>
+              <button
+                type="button"
+                className={`${classes.quickBtn} ${classes.yesBtn}`}
+                onClick={() => setValue((current) => current + 1)}
+              >
+                +1
+              </button>
+              <button
+                type="button"
+                className={`${classes.quickBtn} ${classes.noBtn}`}
+                data-selected={value === 0}
+                onClick={() => setValue(0)}
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                className={classes.quickBtn}
+                data-selected={value === target}
+                onClick={() => setValue(target)}
+              >
+                Target
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`${classes.quickBtn} ${classes.yesBtn}`}
+                data-selected={value === 100}
+                onClick={() => setValue(100)}
+              >
+                ✓ {trackerText.yes}
+              </button>
+              <button
+                type="button"
+                className={`${classes.quickBtn} ${classes.noBtn}`}
+                data-selected={value === 0}
+                onClick={() => setValue(0)}
+              >
+                ✗ {trackerText.no}
+              </button>
+            </>
+          )}
         </div>
 
-        {/* Slider */}
         <div className={classes.sliderSection}>
-          <div className={classes.sliderLabel}>{trackerText.custom}</div>
-          <input
-            type="range"
-            className={classes.slider}
-            min={0}
-            max={100}
-            step={5}
-            value={value}
-            onChange={(e) => setValue(Number(e.target.value))}
-          />
+          <div className={classes.sliderLabel}>
+            {isTargetTopic ? "Completions" : trackerText.custom}
+          </div>
+          {isTargetTopic ? (
+            <input
+              type="number"
+              className={classes.slider}
+              min={0}
+              step={1}
+              value={value}
+              onChange={(e) => setValue(Math.max(0, Number(e.target.value) || 0))}
+            />
+          ) : (
+            <input
+              type="range"
+              className={classes.slider}
+              min={0}
+              max={100}
+              step={5}
+              value={value}
+              onChange={(e) => setValue(Number(e.target.value))}
+            />
+          )}
         </div>
 
-        {/* Actions */}
         <div className={classes.actions}>
           <button type="button" className={classes.cancelBtn} onClick={onClose}>
             {trackerText.cancel}

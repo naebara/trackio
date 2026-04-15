@@ -29,6 +29,25 @@ function getInitialRecurrence(topic?: Topic): RecurrenceRule {
   return topic?.recurrence ?? { type: "daily" };
 }
 
+function getRecurrenceDraft(type: RecurrenceRule["type"]): RecurrenceRule {
+  switch (type) {
+    case "everyXDays":
+      return { type, interval: 2 };
+    case "selectedWeekdays":
+      return { type, weekdays: [1, 3, 5] };
+    case "weekly":
+      return { type, dayOfWeek: 1 };
+    case "monthly":
+      return { type, dayOfMonth: 1 };
+    case "timesPerPeriod":
+      return { type, target: 3, unit: "week" };
+    case "custom":
+      return { type, interval: 2, unit: "week", dayOfWeek: 1 };
+    default:
+      return { type: "daily" };
+  }
+}
+
 export default function TopicFormModal({
   opened,
   topic,
@@ -97,9 +116,7 @@ export default function TopicFormModal({
             label="Recurrence"
             value={recurrence.type}
             data={recurrenceOptions as unknown as { value: string; label: string }[]}
-            onChange={(value) =>
-              setRecurrence({ type: (value as RecurrenceRule["type"]) ?? "daily" })
-            }
+            onChange={(value) => setRecurrence(getRecurrenceDraft((value as RecurrenceRule["type"]) ?? "daily"))}
           />
         </Group>
         <Group grow align="start">
@@ -164,6 +181,36 @@ export default function TopicFormModal({
               setRecurrence({ type: "monthly", dayOfMonth: Number(value) || 1 })
             }
           />
+        )}
+        {recurrence.type === "timesPerPeriod" && (
+          <Group grow align="start">
+            <NumberInput
+              label="Times"
+              min={1}
+              value={recurrence.target ?? 3}
+              onChange={(value) =>
+                setRecurrence({
+                  ...recurrence,
+                  type: "timesPerPeriod",
+                  target: Number(value) || 1,
+                  unit: recurrence.unit ?? "week",
+                })
+              }
+            />
+            <Select
+              label="Per"
+              value={recurrence.unit ?? "week"}
+              data={recurrenceUnits as unknown as { value: string; label: string }[]}
+              onChange={(value) =>
+                setRecurrence({
+                  ...recurrence,
+                  type: "timesPerPeriod",
+                  target: recurrence.target ?? 3,
+                  unit: (value as RecurrenceRule["unit"]) ?? "week",
+                })
+              }
+            />
+          </Group>
         )}
         {recurrence.type === "custom" && (
           <Group grow align="start">

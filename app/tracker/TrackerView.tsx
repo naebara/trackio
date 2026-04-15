@@ -19,8 +19,8 @@ import TopicFormModal from "./components/TopicFormModal";
 import TrackerShell from "./components/TrackerShell";
 import { useTrackerApp } from "./hooks/useTrackerApp";
 import classes from "./TrackerView.module.css";
-import { addDays, eachDayInRange, todayKey } from "./lib/date";
-import { isTopicExpectedOnDate } from "./lib/recurrence";
+import { addDays, todayKey } from "./lib/date";
+import { isTopicExpectedOnDateWithEntries } from "./lib/recurrence";
 import type { Topic, TrackerState, TrackerUser } from "./lib/types";
 
 interface TrackerViewProps {
@@ -47,8 +47,11 @@ export default function TrackerView({
   const [viewingTopic, setViewingTopic] = useState<Topic | null>(null);
 
   const expectedTopicsForSelectedDate = useMemo(
-    () => tracker.activeTopics.filter((topic) => isTopicExpectedOnDate(topic, selectedDate)),
-    [selectedDate, tracker.activeTopics],
+    () =>
+      tracker.activeTopics.filter((topic) =>
+        isTopicExpectedOnDateWithEntries(topic, selectedDate, tracker.entryMap),
+      ),
+    [selectedDate, tracker.activeTopics, tracker.entryMap],
   );
   const monthSummaries = useMemo(
     () => tracker.getMonthSummaries(monthKey),
@@ -81,10 +84,10 @@ export default function TrackerView({
     setQuickDraft({ topic, date });
   }
 
-  function saveQuickValue(topicId: string, date: string, value: number) {
-    const current = tracker.entryMap.get(`${topicId}:${date}`);
+  function saveQuickValue(topic: Topic, date: string, value: number) {
+    const current = tracker.entryMap.get(`${topic.id}:${date}`);
     tracker.upsertEntry({
-      topicId,
+      topicId: topic.id,
       date,
       value,
       note: current?.note ?? "",
@@ -247,6 +250,11 @@ export default function TrackerView({
         }}
       />
       <QuickStatusModal
+        key={
+          quickDraft.topic && quickDraft.date
+            ? `quick-${quickDraft.topic.id}-${quickDraft.date}`
+            : "quick-empty"
+        }
         opened={Boolean(quickDraft.topic && quickDraft.date)}
         topic={quickDraft.topic}
         date={quickDraft.date}

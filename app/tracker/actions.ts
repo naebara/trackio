@@ -13,12 +13,21 @@ import {
 import type { DailyEntry, Topic, TopicMutationInput } from "./lib/types";
 
 const recurrenceSchema = z.object({
-  type: z.enum(["daily", "everyXDays", "selectedWeekdays", "weekly", "monthly", "custom"]),
+  type: z.enum([
+    "daily",
+    "everyXDays",
+    "selectedWeekdays",
+    "weekly",
+    "monthly",
+    "timesPerPeriod",
+    "custom",
+  ]),
   interval: z.number().int().min(1).optional(),
+  target: z.number().int().min(1).optional(),
   weekdays: z.array(z.number().int().min(0).max(6)).optional(),
   dayOfWeek: z.number().int().min(0).max(6).optional(),
   dayOfMonth: z.number().int().min(1).max(31).optional(),
-  unit: z.enum(["day", "week", "month"]).optional(),
+  unit: z.enum(["day", "week", "month", "year"]).optional(),
 });
 
 const topicSchema = z.object({

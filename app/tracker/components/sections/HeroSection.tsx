@@ -3,6 +3,7 @@
 import { ActionIcon, Group, SimpleGrid, Text } from "@mantine/core";
 import { IconArrowLeft, IconArrowRight, IconPlus } from "@tabler/icons-react";
 import { formatDayLabel, todayKey } from "../../lib/date";
+import { trackerText } from "../../constants/i18n";
 import { trackerSelectors } from "../../constants/selectors";
 import StatCard from "../StatCard";
 import classes from "./HeroSection.module.css";
@@ -67,11 +68,11 @@ export default function HeroSection({
         </Group>
       </Group>
       <SimpleGrid cols={{ base: 2, md: 5 }} spacing="sm">
-        <StatCard label="Expected days" value={`${stats.expectedDays}`} />
-        <StatCard label="Logged days" value={`${stats.loggedDays}`} tone="success" />
-        <StatCard label="Missing logs" value={`${stats.pendingDays}`} tone="warning" />
-        <StatCard label="Avg. logged %" value={`${stats.averageLoggedValue}%`} />
-        <StatCard label="Coverage" value={`${stats.coverageRate}%`} />
+        <StatCard label={trackerText.expectedDays} value={`${stats.expectedDays}`} />
+        <StatCard label={trackerText.loggedDays} value={`${stats.loggedDays}`} tone="success" />
+        <StatCard label={trackerText.pendingDays} value={`${stats.pendingDays}`} tone="warning" />
+        <StatCard label={trackerText.avgValue} value={`${stats.averageLoggedValue}%`} />
+        <StatCard label={trackerText.coverage} value={`${stats.coverageRate}%`} />
       </SimpleGrid>
     </div>
   );

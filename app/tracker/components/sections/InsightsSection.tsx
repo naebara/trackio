@@ -1,6 +1,7 @@
 "use client";
 
 import { Paper, Progress, Stack, Text } from "@mantine/core";
+import { trackerText } from "../../constants/i18n";
 import type { Topic, TopicStats } from "../../lib/types";
 import classes from "./InsightsSection.module.css";
 
@@ -22,7 +23,7 @@ export default function InsightsSection({
     <Paper className={classes.section} radius="md" data-testid="tracker-insights-panel">
       <Text className={classes.title}>Performance snapshot</Text>
       <Text className={classes.subtitle}>
-        Coverage tracks whether expected days were logged. Average value measures how strong those logged days were.
+        Coverage tracks how much of the expected workload was completed in the selected tracking windows.
       </Text>
       <Stack mt="lg" gap="md">
         {sorted.map((topic) => {
@@ -33,14 +34,14 @@ export default function InsightsSection({
               <div className={classes.heading}>
                 <Text className={classes.topicName}>{topic.name}</Text>
                 <Text className={classes.topicMeta}>
-                  {stats?.loggedDays ?? 0} / {stats?.expectedDays ?? 0} logged
+                  {stats?.loggedDays ?? 0} / {stats?.expectedDays ?? 0} {trackerText.loggedDays.toLowerCase()}
                 </Text>
               </div>
               <Progress radius="md" value={stats?.coverageRate ?? 0} color="green" size="lg" />
               <div className={classes.detailRow}>
-                <Text className={classes.detail}>{stats?.coverageRate ?? 0}% coverage</Text>
+                <Text className={classes.detail}>{stats?.coverageRate ?? 0}% {trackerText.coverage.toLowerCase()}</Text>
                 <Text className={classes.detail}>{stats?.averageLoggedValue ?? 0}% avg</Text>
-                <Text className={classes.detail}>{stats?.pendingDays ?? 0} pending</Text>
+                <Text className={classes.detail}>{stats?.pendingDays ?? 0} {trackerText.pendingDays.toLowerCase()}</Text>
               </div>
             </div>
           );

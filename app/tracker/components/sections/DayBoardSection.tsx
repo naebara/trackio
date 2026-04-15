@@ -2,7 +2,13 @@
 
 import { Badge, Group, Paper, Progress, Stack, Text } from "@mantine/core";
 import { formatDayLabel } from "../../lib/date";
-import { getRecurrenceSummary } from "../../lib/recurrence";
+import {
+  getEntryValueLabel,
+  getRecurrenceSummary,
+  getTargetProgressForDate,
+  getTargetProgressLabel,
+  isTargetRecurrence,
+} from "../../lib/recurrence";
 import type { DailyEntry, Topic } from "../../lib/types";
 import QuickLogActions from "../QuickLogActions";
 import classes from "./DayBoardSection.module.css";
@@ -11,7 +17,7 @@ interface DayBoardSectionProps {
   date: string;
   topics: Topic[];
   entryMap: Map<string, DailyEntry>;
-  onLogValue: (topicId: string, date: string, value: number) => void;
+  onLogValue: (topic: Topic, date: string, value: number) => void;
   onEditEntry: (topic: Topic, date: string) => void;
 }
 
@@ -43,7 +49,17 @@ export default function DayBoardSection({
         )}
         {topics.map((topic) => {
           const entry = entryMap.get(`${topic.id}:${date}`);
-          const progressValue = entry?.value ?? 0;
+          const targetProgress = getTargetProgressForDate(topic, date, entryMap);
+          const progressValue = targetProgress
+            ? Math.min(100, Math.round((targetProgress.completed / targetProgress.target) * 100))
+            : entry?.value ?? 0;
+          const currentValue = entry?.value ?? 0;
+          const badgeLabel = entry
+            ? getEntryValueLabel(topic, entry.value)
+            : "Not logged";
+          const summaryLabel = targetProgress
+            ? getTargetProgressLabel(topic, date, entryMap)
+            : getRecurrenceSummary(topic);
 
           return (
             <Paper key={topic.id} className={classes.card} radius="md">
@@ -53,17 +69,23 @@ export default function DayBoardSection({
                   <div>
                     <Text className={classes.topicName}>{topic.name}</Text>
                     <Text className={classes.topicDescription}>
-                      {topic.description || getRecurrenceSummary(topic)}
+                      {topic.description || summaryLabel}
                     </Text>
                   </div>
                 </div>
                 <Group gap="xs">
                   <Badge radius="md" variant={entry ? "filled" : "light"} color={entry ? "green" : "gray"}>
-                    {entry ? `${entry.value}%` : "Not logged"}
+                    {badgeLabel}
                   </Badge>
                   <QuickLogActions
-                    onYes={() => onLogValue(topic.id, date, 100)}
-                    onNo={() => onLogValue(topic.id, date, 0)}
+                    onYes={() =>
+                      onLogValue(
+                        topic,
+                        date,
+                        isTargetRecurrence(topic) ? currentValue + 1 : 100,
+                      )
+                    }
+                    onNo={() => onLogValue(topic, date, 0)}
                     onCustom={() => onEditEntry(topic, date)}
                   />
                 </Group>
@@ -72,7 +94,7 @@ export default function DayBoardSection({
                 className={classes.progress}
                 radius="md"
                 size="lg"
-                color={entry ? (entry.value >= 50 ? "green" : "red") : "blue"}
+                color={entry ? (progressValue >= 50 ? "green" : "red") : "blue"}
                 value={entry ? progressValue : 0}
               />
               {entry?.note && <Text className={classes.note}>{entry.note}</Text>}

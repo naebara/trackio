@@ -1,26 +1,9 @@
 "use client";
 
-import {
-  AppShell,
-  Box,
-  Burger,
-  Group,
-  NavLink,
-  Stack,
-  Text,
-  ThemeIcon,
-} from "@mantine/core";
-import { useDisclosure, useMediaQuery } from "@mantine/hooks";
-import {
-  Activity,
-  BarChart3,
-  Calendar,
-  CheckSquare,
-  ListTodo,
-} from "lucide-react";
-import { SignOutButton } from "@/app/components/sign-out-button";
-import { trackerText } from "../constants/i18n";
+import { signOut } from "next-auth/react";
+import { Activity, BarChart3, Calendar, CheckSquare, ListTodo, LogOut } from "lucide-react";
 import classes from "../TrackerView.module.css";
+import { trackerText } from "../constants/i18n";
 
 interface TrackerShellProps {
   activeTab: string;
@@ -36,92 +19,117 @@ const navItems = [
   { value: "insights", label: trackerText.insightsTab, icon: BarChart3 },
 ];
 
+function Navigation({
+  activeTab,
+  onTabChange,
+}: Pick<TrackerShellProps, "activeTab" | "onTabChange">) {
+  return (
+    <nav className={classes.nav}>
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const active = item.value === activeTab;
+
+        return (
+          <button
+            key={item.value}
+            type="button"
+            className={`${classes.link} ${active ? classes.active : ""}`}
+            onClick={() => onTabChange(item.value)}
+          >
+            <span className={classes.iconWrap}>
+              <Icon size={18} />
+            </span>
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 export default function TrackerShell({
   activeTab,
   children,
   onTabChange,
   userLabel,
 }: TrackerShellProps) {
-  const [opened, { toggle }] = useDisclosure();
-  const isMobile = useMediaQuery("(max-width: 48em)");
-
   return (
-    <>
-      <AppShell
-        header={{ height: 48 }}
-        navbar={
-          isMobile
-            ? undefined
-            : { width: 220, breakpoint: "sm", collapsed: { mobile: true } }
-        }
-        padding="md"
-        className={classes.appShell}
-      >
-        <AppShell.Header className={classes.header}>
-          <Group h="100%" px="md" justify="space-between">
-            <Group gap="xs">
-              <ThemeIcon size="sm" radius="md" variant="filled" color="blue">
-                <Activity size={14} />
-              </ThemeIcon>
-              <Text size="md" fw={700} className={classes.brandText}>
-                Trackio
-              </Text>
-            </Group>
-            <Group gap="sm">
-              <Text size="xs" c="dimmed" fw={500} visibleFrom="sm">
-                {userLabel}
-              </Text>
-              <SignOutButton />
-            </Group>
-          </Group>
-        </AppShell.Header>
+    <div className={classes.pageShell}>
+      <aside className={classes.sidebar}>
+        <div className={classes.brand}>
+          <div className={classes.brandGlow} />
+          <span className={classes.brandBadge}>Tr</span>
+          <div className={classes.brandInfo}>
+            <p>Trackio</p>
+            <small>Tracker Module</small>
+          </div>
+        </div>
 
-        {!isMobile && (
-          <AppShell.Navbar p="sm" className={classes.navbar}>
-            <Stack gap={2}>
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.value}
-                  active={item.value === activeTab}
-                  label={item.label}
-                  leftSection={
-                    <item.icon
-                      size={16}
-                      strokeWidth={item.value === activeTab ? 2.5 : 1.8}
-                    />
-                  }
-                  onClick={() => onTabChange(item.value)}
-                  className={classes.navLink}
-                  color="blue"
-                  variant="light"
-                  fw={item.value === activeTab ? 600 : 400}
-                />
-              ))}
-            </Stack>
-          </AppShell.Navbar>
-        )}
+        <Navigation activeTab={activeTab} onTabChange={onTabChange} />
 
-        <AppShell.Main className={classes.mainContent}>
-          <Box px={{ base: 0, sm: "xs" }}>{children}</Box>
-        </AppShell.Main>
-      </AppShell>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className={`${classes.link} ${classes.logoutButton}`}
+          title="Sign out"
+        >
+          <span className={classes.iconWrap}>
+            <LogOut size={18} />
+          </span>
+          <span>Sign out</span>
+        </button>
 
-      {isMobile && (
-        <nav className={classes.bottomNav}>
-          {navItems.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              className={classes.bottomNavButton}
-              data-active={item.value === activeTab}
-              onClick={() => onTabChange(item.value)}
-            >
-              <item.icon size={20} strokeWidth={item.value === activeTab ? 2.5 : 1.8} />
-              <span className={classes.bottomNavLabel}>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
-    </>
+        <div className={classes.footer}>
+          <p>{userLabel}</p>
+          <small>Sidebar Menu</small>
+        </div>
+      </aside>
+
+      <div className={classes.contentColumn}>
+        <header className={classes.mobileHeader}>
+          <div className={classes.mobileBrand}>
+            <span className={classes.mobileBrandBadge}>
+              <Activity size={16} />
+            </span>
+            <div className={classes.mobileBrandInfo}>
+              <p>Trackio</p>
+              <small>{userLabel}</small>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={classes.mobileLogout}
+            onClick={() => signOut({ callbackUrl: "/" })}
+          >
+            <LogOut size={18} />
+          </button>
+        </header>
+
+        <main className={classes.mainContent}>{children}</main>
+      </div>
+
+      <nav className={classes.bottomNav} aria-label="Tracker navigation">
+        <div className={classes.navInner}>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.value === activeTab;
+
+            return (
+              <button
+                key={item.value}
+                type="button"
+                className={`${classes.navItem} ${active ? classes.active : ""}`}
+                onClick={() => onTabChange(item.value)}
+              >
+                <span className={classes.iconWrap}>
+                  <Icon size={18} />
+                </span>
+                <span className={classes.label}>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

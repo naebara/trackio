@@ -4,6 +4,7 @@ export const recurrenceOptions = [
   { value: "selectedWeekdays", label: "Selected weekdays" },
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
+  { value: "timesPerPeriod", label: "X times per period" },
   { value: "custom", label: "Custom recurrence" },
 ] as const;
 
@@ -18,9 +19,10 @@ export const weekdayOptions = [
 ] as const;
 
 export const recurrenceUnits = [
-  { value: "day", label: "Days" },
-  { value: "week", label: "Weeks" },
-  { value: "month", label: "Months" },
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
 ] as const;
 
 export const topicColorOptions = [

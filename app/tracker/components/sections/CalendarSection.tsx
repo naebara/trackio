@@ -80,7 +80,7 @@ export default function CalendarSection({
                 <Text className={classes.dayNumber}>{Number(date.slice(-2))}</Text>
                 <Text className={classes.dayMetric}>{summary?.expectedCount ?? 0} expected</Text>
                 <Text className={classes.dayMetric}>{summary?.loggedCount ?? 0} logged</Text>
-                <Text className={classes.dayMetric}>{summary?.averageLoggedValue ?? 0}% avg</Text>
+                <Text className={classes.dayMetric}>{summary?.averageLoggedValue ?? 0} avg</Text>
               </Stack>
             </button>
           );

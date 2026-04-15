@@ -2,7 +2,6 @@
 
 import { ActionIcon, Group, SimpleGrid, Text } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
-import { useMemo } from "react";
 import {
   addDays,
   addMonths,
@@ -13,7 +12,11 @@ import {
   getMonthStart,
   todayKey,
 } from "../../lib/date";
-import { isTopicExpectedOnDate } from "../../lib/recurrence";
+import {
+  getEntryValueLabel,
+  isTopicExpectedOnDateWithEntries,
+  isTargetRecurrence,
+} from "../../lib/recurrence";
 import type { DailyEntry, Topic } from "../../lib/types";
 import classes from "./TopicCalendar.module.css";
 
@@ -31,7 +34,6 @@ interface TopicCalendarProps {
   onEditEntry: (topic: Topic, date: string) => void;
 }
 
-const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const WEEKDAYS_LONG = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 function getCellLevel(entry: DailyEntry | undefined, expected: boolean): string {
@@ -83,7 +85,7 @@ function MiniMonth({
         ))}
         {days.map((date) => {
           const entry = entryMap.get(`${topic.id}:${date}`);
-          const expected = isTopicExpectedOnDate(topic, date);
+          const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
           const level = getCellLevel(entry, expected);
           return (
             <button
@@ -92,7 +94,7 @@ function MiniMonth({
               className={classes.miniCell}
               data-level={level}
               data-today={date === todayKey() || undefined}
-              title={`${date}: ${entry ? `${entry.value}%` : expected ? "Not logged" : "—"}`}
+              title={`${date}: ${entry ? getEntryValueLabel(topic, entry.value) : expected ? "Not logged" : "—"}`}
               onClick={() => { if (expected) onQuickLog(topic, date); }}
             />
           );
@@ -121,7 +123,7 @@ export default function TopicCalendar({
       <div className={classes.weekGrid}>
         {days.map((date) => {
           const entry = entryMap.get(`${topic.id}:${date}`);
-          const expected = isTopicExpectedOnDate(topic, date);
+          const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
           const level = getCellLevel(entry, expected);
           return (
             <button
@@ -136,7 +138,9 @@ export default function TopicCalendar({
               <span className={classes.weekAbbr}>{getDayAbbr(date)}</span>
               <span className={classes.weekNum}>{Number(date.slice(-2))}</span>
               <span className={classes.weekStatus} data-level={level}>
-                {getCellLabel(entry, expected)}
+                {isTargetRecurrence(topic) && entry
+                  ? getEntryValueLabel(topic, entry.value)
+                  : getCellLabel(entry, expected)}
               </span>
             </button>
           );
@@ -168,7 +172,7 @@ export default function TopicCalendar({
           {Array.from({ length: blanks }, (_, i) => <div key={`b-${i}`} />)}
           {days.map((date) => {
             const entry = entryMap.get(`${topic.id}:${date}`);
-            const expected = isTopicExpectedOnDate(topic, date);
+            const expected = isTopicExpectedOnDateWithEntries(topic, date, entryMap);
             const level = getCellLevel(entry, expected);
             return (
               <button
@@ -181,8 +185,14 @@ export default function TopicCalendar({
                 onContextMenu={(e) => { e.preventDefault(); if (expected) onEditEntry(topic, date); }}
               >
                 <span className={classes.monthDayNum}>{Number(date.slice(-2))}</span>
-                {entry && entry.value > 0 && entry.value < 100 && (
-                  <span className={classes.monthDayVal}>{entry.value}%</span>
+                {entry && (
+                  <span className={classes.monthDayVal}>
+                    {isTargetRecurrence(topic)
+                      ? getEntryValueLabel(topic, entry.value)
+                      : entry.value > 0 && entry.value < 100
+                        ? `${entry.value}%`
+                        : ""}
+                  </span>
                 )}
               </button>
             );
@@ -193,24 +203,18 @@ export default function TopicCalendar({
   }
 
   // Year, All, Custom → render mini-month grids
-  const years = useMemo(() => {
-    if (range === "year") {
-      return [Number(today.slice(0, 4))];
-    }
-    if (range === "all") {
-      const startYear = Number(topic.startDate.slice(0, 4));
-      const endYear = Number(today.slice(0, 4));
-      const result: number[] = [];
-      for (let y = endYear; y >= startYear; y--) result.push(y);
-      return result;
-    }
-    // custom
+  let years: number[] = [];
+  if (range === "year") {
+    years = [Number(today.slice(0, 4))];
+  } else if (range === "all") {
+    const startYear = Number(topic.startDate.slice(0, 4));
+    const endYear = Number(today.slice(0, 4));
+    for (let y = endYear; y >= startYear; y -= 1) years.push(y);
+  } else {
     const startYear = Number(customStart.slice(0, 4));
     const endYear = Number(customEnd.slice(0, 4));
-    const result: number[] = [];
-    for (let y = endYear; y >= startYear; y--) result.push(y);
-    return result;
-  }, [range, topic.startDate, today, customStart, customEnd]);
+    for (let y = endYear; y >= startYear; y -= 1) years.push(y);
+  }
 
   return (
     <div className={classes.yearsContainer}>

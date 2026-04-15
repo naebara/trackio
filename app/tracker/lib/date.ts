@@ -80,6 +80,16 @@ export function getMonthEnd(dateKey: string) {
   return formatDateKey(new Date(date.getFullYear(), date.getMonth() + 1, 0, 12));
 }
 
+export function getYearStart(dateKey: string) {
+  const date = parseDateKey(dateKey);
+  return formatDateKey(new Date(date.getFullYear(), 0, 1, 12));
+}
+
+export function getYearEnd(dateKey: string) {
+  const date = parseDateKey(dateKey);
+  return formatDateKey(new Date(date.getFullYear(), 11, 31, 12));
+}
+
 export function getWeekStart(dateKey: string) {
   return addDays(dateKey, -getDayOfWeek(dateKey));
 }

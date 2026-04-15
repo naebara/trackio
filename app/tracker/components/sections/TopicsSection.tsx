@@ -85,7 +85,7 @@ function TopicCard({
           <Text className={classes.metricValue}>{stats?.coverageRate ?? 0}%</Text>
         </div>
         <div>
-          <Text className={classes.metricLabel}>Avg.</Text>
+          <Text className={classes.metricLabel}>Avg. progress</Text>
           <Text className={classes.metricValue}>{stats?.averageLoggedValue ?? 0}%</Text>
         </div>
       </Group>

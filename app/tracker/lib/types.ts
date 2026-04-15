@@ -4,13 +4,15 @@ export type RecurrenceType =
   | "selectedWeekdays"
   | "weekly"
   | "monthly"
+  | "timesPerPeriod"
   | "custom";
 
-export type RecurrenceUnit = "day" | "week" | "month";
+export type RecurrenceUnit = "day" | "week" | "month" | "year";
 
 export interface RecurrenceRule {
   type: RecurrenceType;
   interval?: number;
+  target?: number;
   weekdays?: number[];
   dayOfWeek?: number;
   dayOfMonth?: number;

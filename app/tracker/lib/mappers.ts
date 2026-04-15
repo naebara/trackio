@@ -19,6 +19,7 @@ const recurrenceTypeFromPrisma: Record<TopicRecurrenceType, RecurrenceType> = {
   SELECTED_WEEKDAYS: "selectedWeekdays",
   WEEKLY: "weekly",
   MONTHLY: "monthly",
+  TIMES_PER_PERIOD: "timesPerPeriod",
   CUSTOM: "custom",
 };
 
@@ -28,6 +29,7 @@ const recurrenceTypeToPrisma: Record<RecurrenceType, TopicRecurrenceType> = {
   selectedWeekdays: TopicRecurrenceType.SELECTED_WEEKDAYS,
   weekly: TopicRecurrenceType.WEEKLY,
   monthly: TopicRecurrenceType.MONTHLY,
+  timesPerPeriod: TopicRecurrenceType.TIMES_PER_PERIOD,
   custom: TopicRecurrenceType.CUSTOM,
 };
 
@@ -35,15 +37,19 @@ const recurrenceUnitFromPrisma: Record<TopicRecurrenceUnit, RecurrenceUnit> = {
   DAY: "day",
   WEEK: "week",
   MONTH: "month",
+  YEAR: "year",
 };
 
 const recurrenceUnitToPrisma: Record<RecurrenceUnit, TopicRecurrenceUnit> = {
   day: TopicRecurrenceUnit.DAY,
   week: TopicRecurrenceUnit.WEEK,
   month: TopicRecurrenceUnit.MONTH,
+  year: TopicRecurrenceUnit.YEAR,
 };
 
 export function mapTopicFromDatabase(topic: PrismaTopic): Topic {
+  const recurrenceType = recurrenceTypeFromPrisma[topic.recurrenceType];
+
   return {
     id: topic.id,
     name: topic.name,
@@ -53,8 +59,15 @@ export function mapTopicFromDatabase(topic: PrismaTopic): Topic {
     endDate: topic.endDate ? databaseDateToDateKey(topic.endDate) : null,
     archivedAt: topic.archivedAt ? databaseDateToDateKey(topic.archivedAt) : null,
     recurrence: {
-      type: recurrenceTypeFromPrisma[topic.recurrenceType],
-      interval: topic.recurrenceInterval ?? undefined,
+      type: recurrenceType,
+      interval:
+        recurrenceType === "timesPerPeriod"
+          ? undefined
+          : topic.recurrenceInterval ?? undefined,
+      target:
+        recurrenceType === "timesPerPeriod"
+          ? topic.recurrenceInterval ?? undefined
+          : undefined,
       weekdays: topic.recurrenceWeekdays,
       dayOfWeek: topic.recurrenceDayOfWeek ?? undefined,
       dayOfMonth: topic.recurrenceDayOfMonth ?? undefined,
@@ -82,7 +95,8 @@ export function mapEntryFromDatabase(entry: PrismaDailyEntry): DailyEntry {
 export function mapRecurrenceToDatabase(rule: RecurrenceRule) {
   return {
     recurrenceType: recurrenceTypeToPrisma[rule.type],
-    recurrenceInterval: rule.interval ?? null,
+    recurrenceInterval:
+      rule.type === "timesPerPeriod" ? rule.target ?? null : rule.interval ?? null,
     recurrenceWeekdays: rule.weekdays ?? [],
     recurrenceDayOfWeek: rule.dayOfWeek ?? null,
     recurrenceDayOfMonth: rule.dayOfMonth ?? null,

@@ -10,7 +10,8 @@ import {
   getMonthStart,
   todayKey,
 } from "../../lib/date";
-import { isTopicExpectedOnDate, getRecurrenceSummary } from "../../lib/recurrence";
+import { getRecurrenceSummary } from "../../lib/recurrence";
+import { calculateTopicStats } from "../../lib/stats";
 import { trackerText } from "../../constants/i18n";
 import type { DailyEntry, Topic } from "../../lib/types";
 import TopicCalendar from "./TopicCalendar";
@@ -60,19 +61,13 @@ export default function TopicDetailSection({
   const statsRange = getStatsRange(range, topic, customStart, customEnd);
   const stats = useMemo(() => {
     const dates = eachDayInRange(statsRange.start, statsRange.end);
-    let expected = 0, logged = 0, sumValues = 0;
-    for (const date of dates) {
-      if (isTopicExpectedOnDate(topic, date)) {
-        expected++;
-        const entry = entryMap.get(`${topic.id}:${date}`);
-        if (entry) { logged++; sumValues += entry.value; }
-      }
-    }
+    const topicStats = calculateTopicStats(topic, dates, entryMap);
+
     return {
-      expected,
-      logged,
-      coverage: expected > 0 ? Math.round((logged / expected) * 100) : 0,
-      average: logged > 0 ? Math.round(sumValues / logged) : 0,
+      expected: topicStats.expectedDays,
+      logged: topicStats.loggedDays,
+      coverage: topicStats.coverageRate,
+      average: topicStats.averageLoggedValue,
     };
   }, [statsRange.start, statsRange.end, topic, entryMap]);
 

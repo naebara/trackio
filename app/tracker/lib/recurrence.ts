@@ -4,13 +4,19 @@ import {
   differenceInDays,
   differenceInMonths,
   differenceInWeeks,
+  eachDayInRange,
   formatDateKey,
   getDayOfMonth,
   getDayOfWeek,
   getDaysInMonth,
   parseDateKey,
+  getMonthEnd,
+  getMonthStart,
+  getWeekStart,
+  getYearEnd,
+  getYearStart,
 } from "./date";
-import type { RecurrenceRule, Topic } from "./types";
+import type { DailyEntry, RecurrenceRule, RecurrenceUnit, Topic } from "./types";
 
 function normalizeEndDate(topic: Topic) {
   if (topic.endDate && topic.archivedAt) {
@@ -20,6 +26,40 @@ function normalizeEndDate(topic: Topic) {
   }
 
   return topic.endDate ?? topic.archivedAt ?? null;
+}
+
+function getRecurrenceRule(input: RecurrenceRule | Topic) {
+  return "recurrence" in input ? input.recurrence : input;
+}
+
+function formatUnit(unit: RecurrenceUnit, count: number) {
+  const singular = unit;
+  if (count === 1) return singular;
+
+  switch (unit) {
+    case "day":
+      return "days";
+    case "week":
+      return "weeks";
+    case "month":
+      return "months";
+    case "year":
+      return "years";
+  }
+}
+
+export function isTargetRecurrence(input: RecurrenceRule | Topic) {
+  return getRecurrenceRule(input).type === "timesPerPeriod";
+}
+
+export function getRecurrenceTarget(input: RecurrenceRule | Topic) {
+  const rule = getRecurrenceRule(input);
+  return Math.max(1, rule.target ?? 1);
+}
+
+export function getRecurrenceUnit(input: RecurrenceRule | Topic) {
+  const rule = getRecurrenceRule(input);
+  return rule.unit ?? "week";
 }
 
 export function isTopicActiveOnDate(topic: Topic, date: string) {
@@ -82,7 +122,106 @@ function matchesMonthly(
   return differenceInMonths(first, date) % interval === 0;
 }
 
-export function isExpectedOnDate(rule: RecurrenceRule, startDate: string, date: string) {
+export function getPeriodRange(date: string, unit: RecurrenceUnit) {
+  switch (unit) {
+    case "day":
+      return { start: date, end: date };
+    case "week": {
+      const start = getWeekStart(date);
+      return { start, end: addDays(start, 6) };
+    }
+    case "month":
+      return { start: getMonthStart(date), end: getMonthEnd(date) };
+    case "year":
+      return { start: getYearStart(date), end: getYearEnd(date) };
+  }
+}
+
+function sumRecordedTargetCount(
+  topicId: string,
+  start: string,
+  end: string,
+  entryMap: Map<string, DailyEntry>,
+) {
+  if (compareDateKeys(start, end) > 0) return 0;
+
+  return eachDayInRange(start, end).reduce(
+    (total, currentDate) => total + Math.max(0, entryMap.get(`${topicId}:${currentDate}`)?.value ?? 0),
+    0,
+  );
+}
+
+export function getTargetProgressForDate(
+  topic: Topic,
+  date: string,
+  entryMap: Map<string, DailyEntry>,
+) {
+  if (!isTargetRecurrence(topic)) return null;
+
+  const unit = getRecurrenceUnit(topic);
+  const target = getRecurrenceTarget(topic);
+  const { start, end } = getPeriodRange(date, unit);
+  const endDate = normalizeEndDate(topic);
+  const activeStart =
+    compareDateKeys(topic.startDate, start) > 0 ? topic.startDate : start;
+  const activeEnd = endDate && compareDateKeys(endDate, end) < 0 ? endDate : end;
+  const currentValue = Math.max(0, entryMap.get(`${topic.id}:${date}`)?.value ?? 0);
+
+  if (compareDateKeys(activeStart, activeEnd) > 0) {
+    return {
+      unit,
+      target,
+      start,
+      end,
+      completed: 0,
+      completedBeforeDate: 0,
+      currentValue,
+      remaining: target,
+    };
+  }
+
+  const completed = sumRecordedTargetCount(topic.id, activeStart, activeEnd, entryMap);
+  const previousDate = addDays(date, -1);
+  const completedBeforeDate =
+    compareDateKeys(previousDate, activeStart) >= 0
+      ? sumRecordedTargetCount(topic.id, activeStart, previousDate, entryMap)
+      : 0;
+
+  return {
+    unit,
+    target,
+    start,
+    end,
+    completed,
+    completedBeforeDate,
+    currentValue,
+    remaining: Math.max(0, target - Math.min(target, completed)),
+  };
+}
+
+export function getEntryValueLabel(topic: Topic, value: number) {
+  return isTargetRecurrence(topic) ? `${value}x` : `${value}%`;
+}
+
+export function getTargetProgressLabel(
+  topic: Topic,
+  date: string,
+  entryMap: Map<string, DailyEntry>,
+) {
+  const progress = getTargetProgressForDate(topic, date, entryMap);
+
+  if (!progress) return null;
+
+  return `${Math.min(progress.completed, progress.target)} / ${progress.target} this ${progress.unit}`;
+}
+
+export function isExpectedOnDate(
+  rule: RecurrenceRule,
+  startDate: string,
+  date: string,
+  entryMap?: Map<string, DailyEntry>,
+  topic?: Topic,
+) {
   switch (rule.type) {
     case "daily":
       return true;
@@ -99,6 +238,17 @@ export function isExpectedOnDate(rule: RecurrenceRule, startDate: string, date: 
         rule.dayOfMonth ?? getDayOfMonth(startDate),
         1,
       );
+    case "timesPerPeriod":
+      if (!topic || !entryMap) {
+        return true;
+      }
+
+      const progress = getTargetProgressForDate(topic, date, entryMap);
+      if (!progress) {
+        return true;
+      }
+
+      return progress.completedBeforeDate < progress.target || progress.currentValue > 0;
     case "custom":
       if (rule.unit === "week") {
         return matchesWeekly(
@@ -129,6 +279,15 @@ export function isTopicExpectedOnDate(topic: Topic, date: string) {
   return isExpectedOnDate(topic.recurrence, topic.startDate, date);
 }
 
+export function isTopicExpectedOnDateWithEntries(
+  topic: Topic,
+  date: string,
+  entryMap: Map<string, DailyEntry>,
+) {
+  if (!isTopicActiveOnDate(topic, date)) return false;
+  return isExpectedOnDate(topic.recurrence, topic.startDate, date, entryMap, topic);
+}
+
 export function getRecurrenceSummary(topic: Topic) {
   const { recurrence } = topic;
   const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
@@ -148,8 +307,16 @@ export function getRecurrenceSummary(topic: Topic) {
       return `Weekly on ${weekdayFormatter.format(new Date(2026, 0, 4 + (recurrence.dayOfWeek ?? 0), 12))}`;
     case "monthly":
       return `Monthly on day ${recurrence.dayOfMonth ?? getDayOfMonth(topic.startDate)}`;
+    case "timesPerPeriod":
+      return `${getRecurrenceTarget(recurrence)} time(s) / ${formatUnit(
+        getRecurrenceUnit(recurrence),
+        getRecurrenceTarget(recurrence),
+      )}`;
     case "custom":
-      return `Every ${Math.max(1, recurrence.interval ?? 1)} ${recurrence.unit ?? "day"}(s)`;
+      return `Every ${Math.max(1, recurrence.interval ?? 1)} ${formatUnit(
+        recurrence.unit ?? "day",
+        Math.max(1, recurrence.interval ?? 1),
+      )}`;
     default:
       return "Custom";
   }
